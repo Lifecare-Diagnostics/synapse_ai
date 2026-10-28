@@ -1,0 +1,502 @@
+{
+  "_comment": "Drafted by AI from the source files; must be verified by a human.",
+  "files": {
+    "patient_001_cbc.txt": {
+      "document_type": "lab report",
+      "patient_id": "SYN-1001",
+      "patient_name": "Rohan Example",
+      "document_date": "2026-04-03",
+      "date_label": "Registered On",
+      "lab_results": [
+        {
+          "test_name": "Haemoglobin",
+          "result_value": 14.2,
+          "unit": "g/dL",
+          "reference_range_text": "Reference 13.0 - 17.0",
+          "reference_low": 13.0,
+          "reference_high": 17.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "RBC Count",
+          "result_value": 4.82,
+          "unit": "x10^6/cmm",
+          "reference_range_text": "Reference 4.5 - 5.5",
+          "reference_low": 4.5,
+          "reference_high": 5.5,
+          "flag": "normal"
+        },
+        {
+          "test_name": "WBC Count",
+          "result_value": 7.10,
+          "unit": "x10^3/cmm",
+          "reference_range_text": "Reference 4.0 - 10.0",
+          "reference_low": 4.0,
+          "reference_high": 10.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Platelet Count",
+          "result_value": 2.75,
+          "unit": "x10^5/cmm",
+          "reference_range_text": "Reference 1.5 - 4.1",
+          "reference_low": 1.5,
+          "reference_high": 4.1,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Neutrophils",
+          "result_value": 58.0,
+          "unit": "%",
+          "reference_range_text": null,
+          "reference_low": null,
+          "reference_high": null,
+          "flag": "unknown"
+        },
+        {
+          "test_name": "Lymphocytes",
+          "result_value": 34.0,
+          "unit": "%",
+          "reference_range_text": null,
+          "reference_low": null,
+          "reference_high": null,
+          "flag": "unknown"
+        },
+        {
+          "test_name": "Eosinophils",
+          "result_value": 3.0,
+          "unit": "%",
+          "reference_range_text": null,
+          "reference_low": null,
+          "reference_high": null,
+          "flag": "unknown"
+        },
+        {
+          "test_name": "Monocytes",
+          "result_value": 5.0,
+          "unit": "%",
+          "reference_range_text": null,
+          "reference_low": null,
+          "reference_high": null,
+          "flag": "unknown"
+        }
+      ],
+      "key_text_sections_headings": ["Comment"],
+      "validation_errors": []
+    },
+    "patient_002_biochemistry.txt": {
+      "document_type": "lab report",
+      "patient_id": "SYN-1002",
+      "patient_name": "Meera Sample",
+      "document_date": "2026-04-07",
+      "date_label": "Date",
+      "lab_results": [
+        {
+          "test_name": "Fasting Glucose",
+          "result_value": 96.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Reference 70 - 110",
+          "reference_low": 70.0,
+          "reference_high": 110.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Urea",
+          "result_value": 24.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Reference 10 - 38.5",
+          "reference_low": 10.0,
+          "reference_high": 38.5,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Creatinine",
+          "result_value": 0.91,
+          "unit": "mg/dL",
+          "reference_range_text": "Reference 0.7 - 1.3",
+          "reference_low": 0.7,
+          "reference_high": 1.3,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Sodium",
+          "result_value": 139.0,
+          "unit": "mEq/L",
+          "reference_range_text": "Reference 135 - 145",
+          "reference_low": 135.0,
+          "reference_high": 145.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Potassium",
+          "result_value": 4.2,
+          "unit": "mEq/L",
+          "reference_range_text": "Reference 3.5 - 5.5",
+          "reference_low": 3.5,
+          "reference_high": 5.5,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Calcium",
+          "result_value": 9.4,
+          "unit": "mg/dL",
+          "reference_range_text": "Reference 8.5 - 10.1",
+          "reference_low": 8.5,
+          "reference_high": 10.1,
+          "flag": "normal"
+        }
+      ],
+      "key_text_sections_headings": ["Specimen"],
+      "validation_errors": []
+    },
+    "patient_003_lipid_profile.txt": {
+      "document_type": "lab report",
+      "patient_id": "SYN-1003",
+      "patient_name": "Arjun Fiction",
+      "document_date": "2026-04-10",
+      "date_label": "Collected",
+      "lab_results": [
+        {
+          "test_name": "Triglycerides",
+          "result_value": 178.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Less than 150",
+          "reference_low": null,
+          "reference_high": 150.0,
+          "flag": "high"
+        },
+        {
+          "test_name": "Total Cholesterol",
+          "result_value": 212.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Up to 200",
+          "reference_low": null,
+          "reference_high": 200.0,
+          "flag": "high"
+        },
+        {
+          "test_name": "HDL Cholesterol",
+          "result_value": 42.0,
+          "unit": "mg/dL",
+          "reference_range_text": "40 - 60",
+          "reference_low": 40.0,
+          "reference_high": 60.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "LDL Cholesterol",
+          "result_value": 134.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Up to 100",
+          "reference_low": null,
+          "reference_high": 100.0,
+          "flag": "high"
+        },
+        {
+          "test_name": "VLDL Cholesterol",
+          "result_value": 36.0,
+          "unit": "mg/dL",
+          "reference_range_text": null,
+          "reference_low": null,
+          "reference_high": null,
+          "flag": "unknown"
+        },
+        {
+          "test_name": "Cholesterol : HDL Ratio",
+          "result_value": 5.05,
+          "unit": null,
+          "reference_range_text": null,
+          "reference_low": null,
+          "reference_high": null,
+          "flag": "unknown"
+        }
+      ],
+      "key_text_sections_headings": ["Remark"],
+      "validation_errors": []
+    },
+    "patient_004_renal_function.txt": {
+      "document_type": "lab report",
+      "patient_id": "SYN-1004",
+      "patient_name": "Kavya Placeholder",
+      "document_date": "2026-04-12",
+      "date_label": "Date of Report",
+      "lab_results": [
+        {
+          "test_name": "Urea",
+          "result_value": 31.2,
+          "unit": "mg/dL",
+          "reference_range_text": "Ref: 10 - 38.5",
+          "reference_low": 10.0,
+          "reference_high": 38.5,
+          "flag": "normal"
+        },
+        {
+          "test_name": "BUN",
+          "result_value": 14.1,
+          "unit": "mg/dL",
+          "reference_range_text": "Ref: 5 - 18",
+          "reference_low": 5.0,
+          "reference_high": 18.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Creatinine",
+          "result_value": 1.06,
+          "unit": "mg/dL",
+          "reference_range_text": "Ref: 0.7 - 1.3",
+          "reference_low": 0.7,
+          "reference_high": 1.3,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Uric Acid",
+          "result_value": 5.8,
+          "unit": "mg/dL",
+          "reference_range_text": "Ref: 2.6 - 6.0",
+          "reference_low": 2.6,
+          "reference_high": 6.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Sodium",
+          "result_value": 143.0,
+          "unit": "mEq/L",
+          "reference_range_text": "Ref: 135 - 145",
+          "reference_low": 135.0,
+          "reference_high": 145.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Potassium",
+          "result_value": 4.7,
+          "unit": "mEq/L",
+          "reference_range_text": "Ref: 3.5 - 5.5",
+          "reference_low": 3.5,
+          "reference_high": 5.5,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Chloride",
+          "result_value": 107.0,
+          "unit": "mEq/L",
+          "reference_range_text": "Ref: 96 - 109",
+          "reference_low": 96.0,
+          "reference_high": 109.0,
+          "flag": "normal"
+        }
+      ],
+      "key_text_sections_headings": ["Comment"],
+      "validation_errors": []
+    },
+    "patient_005_thyroid.txt": {
+      "document_type": "lab report",
+      "patient_id": "SYN-1005",
+      "patient_name": "Isha Testerson",
+      "document_date": "2026-04-15",
+      "date_label": "Report Date",
+      "lab_results": [
+        {
+          "test_name": "T3",
+          "result_value": 112.0,
+          "unit": "ng/dL",
+          "reference_range_text": "Reference 60 - 181",
+          "reference_low": 60.0,
+          "reference_high": 181.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "T4",
+          "result_value": 8.6,
+          "unit": "ug/dL",
+          "reference_range_text": "Reference 3.2 - 12.6",
+          "reference_low": 3.2,
+          "reference_high": 12.6,
+          "flag": "normal"
+        },
+        {
+          "test_name": "TSH",
+          "result_value": 3.10,
+          "unit": "uIU/mL",
+          "reference_range_text": "Reference 0.55 - 4.78",
+          "reference_low": 0.55,
+          "reference_high": 4.78,
+          "flag": "normal"
+        }
+      ],
+      "key_text_sections_headings": ["Sample Type", "Method", "Interpretation note"],
+      "validation_errors": []
+    },
+    "patient_006_xray_chest.txt": {
+      "document_type": "radiology",
+      "patient_id": "SYN-1006",
+      "patient_name": "Dev Demo",
+      "document_date": "2026-04-18",
+      "date_label": "Study Date",
+      "lab_results": [],
+      "key_text_sections_headings": ["Findings", "IMPRESSION", "Recommendation"],
+      "validation_errors": []
+    },
+    "patient_007_ultrasound.txt": {
+      "document_type": "ultrasound",
+      "patient_id": "SYN-1007",
+      "patient_name": "Nisha Example",
+      "document_date": "2026-04-21",
+      "date_label": "Study Date",
+      "lab_results": [],
+      "key_text_sections_headings": ["Liver", "Gall bladder", "Spleen", "Pancreas", "Kidneys", "Urinary bladder", "IMPRESSION"],
+      "validation_errors": []
+    },
+    "patient_008_doctor_note.txt": {
+      "document_type": "clinical note",
+      "patient_id": "SYN-1008",
+      "patient_name": "Sameer Mock",
+      "document_date": "2026-04-25",
+      "date_label": "Date",
+      "lab_results": [],
+      "key_text_sections_headings": ["Chief complaints", "Examination", "Assessment", "Plan"],
+      "validation_errors": []
+    },
+    "patient_009_prescription.txt": {
+      "document_type": "prescription",
+      "patient_id": "SYN-1009",
+      "patient_name": "Tara Placeholder",
+      "document_date": "2026-04-28",
+      "date_label": "Date",
+      "lab_results": [],
+      "key_text_sections_headings": ["Complaint", "Prescription"],
+      "validation_errors": []
+    },
+    "patient_010_mixed_report.txt": {
+      "document_type": "mixed",
+      "patient_id": "SYN-1010",
+      "patient_name": "Vikram Fictional",
+      "document_date": "2026-05-02",
+      "date_label": "Report Date",
+      "lab_results": [
+        {
+          "test_name": "Haemoglobin",
+          "result_value": 13.6,
+          "unit": "g/dL",
+          "reference_range_text": "13 - 17",
+          "reference_low": 13.0,
+          "reference_high": 17.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "WBC Count",
+          "result_value": 8.2,
+          "unit": "x10^3/cmm",
+          "reference_range_text": "4 - 10",
+          "reference_low": 4.0,
+          "reference_high": 10.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Platelet Count",
+          "result_value": 2.48,
+          "unit": "x10^5/cmm",
+          "reference_range_text": "1.5 - 4.1",
+          "reference_low": 1.5,
+          "reference_high": 4.1,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Fasting Glucose",
+          "result_value": 108.0,
+          "unit": "mg/dL",
+          "reference_range_text": "70 - 110",
+          "reference_low": 70.0,
+          "reference_high": 110.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Creatinine",
+          "result_value": 1.12,
+          "unit": "mg/dL",
+          "reference_range_text": "0.7 - 1.3",
+          "reference_low": 0.7,
+          "reference_high": 1.3,
+          "flag": "normal"
+        },
+        {
+          "test_name": "Total Cholesterol",
+          "result_value": 198.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Up to 200",
+          "reference_low": null,
+          "reference_high": 200.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "HDL",
+          "result_value": 44.0,
+          "unit": "mg/dL",
+          "reference_range_text": "40 - 60",
+          "reference_low": 40.0,
+          "reference_high": 60.0,
+          "flag": "normal"
+        },
+        {
+          "test_name": "LDL",
+          "result_value": 118.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Up to 100",
+          "reference_low": null,
+          "reference_high": 100.0,
+          "flag": "high"
+        },
+        {
+          "test_name": "Triglycerides",
+          "result_value": 142.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Less than 150",
+          "reference_low": null,
+          "reference_high": 150.0,
+          "flag": "normal"
+        }
+      ],
+      "key_text_sections_headings": ["Chest X-ray impression", "Abdomen impression", "NOTE"],
+      "validation_errors": []
+    },
+    "messy_001_missing_date.txt": {
+      "document_type": "lab report",
+      "patient_id": "SYN-1002",
+      "patient_name": "Meera Sample",
+      "document_date": null,
+      "date_label": null,
+      "lab_results": [
+        {
+          "test_name": "Fasting Glucose",
+          "result_value": 96.0,
+          "unit": "mg/dL",
+          "reference_range_text": "Reference 70 - 110",
+          "reference_low": 70.0,
+          "reference_high": 110.0,
+          "flag": "normal"
+        }
+      ],
+      "key_text_sections_headings": [],
+      "validation_errors": ["Missing required field: document_date"]
+    },
+    "messy_002_missing_unit.txt": {
+      "document_type": "lab report",
+      "patient_id": "SYN-1005",
+      "patient_name": "Isha Testerson",
+      "document_date": "2026-04-15",
+      "date_label": "Report Date",
+      "lab_results": [
+        {
+          "test_name": "T3",
+          "result_value": 112.0,
+          "unit": null,
+          "reference_range_text": "Reference 60 - 181",
+          "reference_low": 60.0,
+          "reference_high": 181.0,
+          "flag": "normal"
+        }
+      ],
+      "key_text_sections_headings": [],
+      "validation_errors": ["Missing unit for test: T3"]
+    }
+  }
+}

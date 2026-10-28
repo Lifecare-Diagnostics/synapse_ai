@@ -1,0 +1,18 @@
+SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA
+
+Patient: Nisha Example
+Patient ID: SYN-1007
+Age/Sex: 46 / Female
+Study Date: 2026-04-21
+Study: Ultrasound Whole Abdomen and Pelvis
+
+Liver: Normal in size. Mildly increased echotexture.
+Gall bladder: No calculus or wall thickening.
+Spleen: Normal.
+Pancreas: Visualised portion appears unremarkable.
+Kidneys: Normal size and cortical differentiation. No calculus.
+Urinary bladder: Well distended without focal abnormality.
+
+IMPRESSION:
+Mild fatty change in the liver.
+No other significant abnormality identified.

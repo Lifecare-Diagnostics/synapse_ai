@@ -1,0 +1,19 @@
+SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA
+
+Patient Name: Dev Demo
+Patient ID: SYN-1006
+Age / Sex: 68 years / Male
+Study Date: 2026-04-18
+Study: X-RAY CHEST PA
+
+Findings:
+The visualised lung fields are clear.
+Cardiac silhouette is within normal limits.
+Costophrenic angles are clear.
+No focal air-space opacity is seen.
+Visualised osseous structures show no acute abnormality.
+
+IMPRESSION:
+No acute cardiopulmonary abnormality detected.
+
+Recommendation: Correlate clinically where appropriate.

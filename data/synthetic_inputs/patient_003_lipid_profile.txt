@@ -1,0 +1,23 @@
+SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA
+
+Patient Name : Arjun Fiction
+Patient ID : SYN-1003
+Age / Sex : 57 years / Male
+Collected : 2026-04-10
+Test : Lipid Profile
+Specimen : Serum
+
+Triglycerides                 178 mg/dL
+Total Cholesterol             212 mg/dL
+HDL Cholesterol                42 mg/dL
+LDL Cholesterol               134 mg/dL
+VLDL Cholesterol               36 mg/dL
+Cholesterol : HDL Ratio       5.05
+
+Reference ranges:
+Triglycerides: Less than 150
+Total Cholesterol: Up to 200
+HDL Cholesterol: 40 - 60
+LDL Cholesterol: Up to 100
+
+Remark: Values should be interpreted in clinical context.

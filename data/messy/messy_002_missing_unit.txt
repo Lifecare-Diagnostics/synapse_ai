@@ -1,0 +1,9 @@
+SYNTHETIC TEST DOCUMENT - NOT REAL PATIENT DATA
+
+Patient: Isha Testerson
+Patient ID: SYN-1005
+Age/Sex: 35 years / Female
+Report Date: 2026-04-15
+Department: Immunoassay
+
+T3: 112 (Reference 60 - 181)

@@ -1,0 +1,8 @@
+SYNTHETIC TEST DOCUMENT - NOT REAL PATIENT DATA
+
+Patient: Meera Sample
+Patient ID: SYN-1002
+Age/Sex: 51 / Female
+Report: Fasting Biochemistry
+
+Fasting Glucose: 96 mg/dL (Reference 70 - 110)
