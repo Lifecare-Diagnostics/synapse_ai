@@ -1,0 +1,20 @@
+SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA
+
+Patient ID: SYN-1008
+Patient Name: Sameer Mock
+Date: 2026-04-25
+Document Type: Doctor's Clinical Note
+
+Chief complaints:
+Patient reports increased thirst and frequent urination for about 10 days.
+Also reports tiredness in the evenings.
+
+Examination:
+No fever reported in the note. Blood pressure recorded as 138/86 mmHg.
+
+Assessment:
+Possible impaired glucose regulation; further laboratory correlation advised.
+
+Plan:
+Fasting glucose and HbA1c requested.
+Encouraged regular hydration and follow-up after test results.

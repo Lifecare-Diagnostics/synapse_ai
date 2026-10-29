@@ -1,0 +1,16 @@
+SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA
+
+Patient: Tara Placeholder
+Patient ID: SYN-1009
+Date: 2026-04-28
+Document Type: Prescription
+
+Complaint:
+Intermittent headache for 3 days.
+
+Prescription:
+1. Paracetamol 500 mg — one tablet after food, as needed for headache.
+2. Oral fluids and rest advised.
+
+No antibiotic prescribed.
+Follow-up advised if symptoms persist or worsen.

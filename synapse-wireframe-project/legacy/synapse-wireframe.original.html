@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse Wireframe</title>
+    <style>
+        :root {
+            --primary: #1F3A5F;
+            --primary-light: #F0F4F8;
+            --surface: #FFFFFF;
+            --bg: #F5F7FA;
+            --text-main: #1A202C;
+            --text-muted: #718096;
+            --border: #E2E8F0;
+            --amber: #D97706;
+            --amber-bg: #FEF3C7;
+            --green: #059669;
+            --green-bg: #D1FAE5;
+            --red: #DC2626;
+            --red-bg: #FEE2E2;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Annotations */
+        .annotation {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 100;
+            cursor: help;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        
+        body.annotations-on .annotation {
+            display: flex;
+        }
+
+        .annotation-panel {
+            width: 300px;
+            background: white;
+            border-left: 1px solid var(--border);
+            display: none;
+            flex-direction: column;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        body.annotations-on .annotation-panel {
+            display: flex;
+        }
+
+        /* Layout */
+        .sidebar {
+            width: 240px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            padding: 24px 16px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav {
+            padding: 16px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            height: 64px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            flex-shrink: 0;
+        }
+
+        .search-bar {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px 12px 8px 32px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            outline: none;
+        }
+
+        .search-bar svg {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-synthetic {
+            background: #E2E8F0;
+            color: #4A5568;
+            border: 1px solid #CBD5E0;
+        }
+
+        .badge-status {
+            display: inline-block;
+        }
+        .status-amber { background: var(--amber-bg); color: var(--amber); }
+        .status-green { background: var(--green-bg); color: var(--green); }
+        .status-blue { background: var(--primary-light); color: var(--primary); }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .toggle-switch {
+            width: 36px;
+            height: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            position: relative;
+            transition: var(--transition);
+        }
+        body.annotations-on .toggle-switch {
+            background: var(--primary);
+        }
+        
+        .toggle-knob {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: var(--transition);
+        }
+        body.annotations-on .toggle-knob {
+            left: 18px;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-light);
+            padding: 4px 12px 4px 4px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .avatar {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            height: 100%;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Cards & Components */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        /* Specific Screens */
+        /* Upload */
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 48px;
+            text-align: center;
+            background: var(--bg);
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        /* Review */
+        .split-view {
+            display: flex;
+            gap: 24px;
+            height: 100%;
+        }
+
+        .split-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .mock-report {
+            padding: 40px;
+            font-family: monospace;
+            overflow-y: auto;
+        }
+        
+        .highlight-row {
+            background: rgba(217, 119, 6, 0.2);
+            outline: 2px solid var(--amber);
+        }
+
+        /* Timeline */
+        .chart-container {
+            height: 300px;
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        /* AI Chat */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            padding-bottom: 16px;
+        }
+        
+        .chat-msg {
+            padding: 16px;
+            border-radius: var(--radius);
+            max-width: 80%;
+        }
+        
+        .chat-user {
+            background: var(--primary-light);
+            align-self: flex-end;
+        }
+        
+        .chat-ai {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            align-self: flex-start;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--green);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body class="annotations-on">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Synapse
+        </div>
+        <div class="nav">
+            <div class="nav-item active" onclick="nav('dashboard')">Dashboard</div>
+            <div class="nav-item" onclick="nav('upload')">Upload</div>
+            <div class="nav-item" onclick="nav('review')">Review Queue <span class="badge badge-status status-amber" style="margin-left:auto">17</span></div>
+            <div class="nav-item" onclick="nav('library')">Report Library</div>
+            <div class="nav-item" onclick="nav('timeline')">Patient Timeline</div>
+            <div class="nav-item" onclick="nav('ai')">AI Assistant</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="search-bar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" placeholder="Search patients, tests, keywords...">
+            </div>
+            <div class="topbar-right">
+                <span class="badge badge-synthetic">Demo | Synthetic data</span>
+                
+                <div class="toggle" onclick="toggleAnnotations()">
+                    <span>Annotations</span>
+                    <div class="toggle-switch">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+
+                <div class="user-chip">
+                    <div class="avatar">R</div>
+                    Reviewer
+                </div>
+            </div>
+        </div>
+
+        <!-- Screens -->
+        <div class="content" id="main-content">
+            
+            <!-- Screen 1: Dashboard -->
+            <div id="dashboard" class="screen active">
+                <h2 style="position:relative;">Dashboard <div class="annotation" style="top:50%;left:-20px;">1</div></h2>
+                
+                <div class="grid-4">
+                    <div class="card stat-card">
+                        <div class="stat-label">Reports Ingested</div>
+                        <div class="stat-value">1,284</div>
+                        <div class="stat-label" style="font-size:12px">(Mock Data)</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-label">Processed Today</div>
+                        <div class="stat-value">42</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-label">Pending Review</div>
+                        <div class="stat-value" style="color:var(--amber)">17</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-label">Avg Extraction Confidence</div>
+                        <div class="stat-value" style="color:var(--green)">94%</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Pipeline Health</h3>
+                    <div style="display:flex; justify-content:space-between; margin-top:16px; font-size:12px; text-align:center;">
+                        <div>Collect<br><b>1284</b></div>
+                        <div>Store<br><b>1284</b></div>
+                        <div>Extract<br><b>1284</b></div>
+                        <div>Structure<br><b>1284</b></div>
+                        <div>Organise<br><b>1284</b></div>
+                        <div>Search<br><b>1284</b></div>
+                        <div>Summarise<br><b>-</b></div>
+                        <div>Interpret<br><b>-</b></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Recent Uploads</h3>
+                    <table style="margin-top:16px;">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Report Type</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SYNTHETIC PATIENT ALPHA (SYN-P-0001)</td>
+                                <td>CBC</td>
+                                <td>Lifecare</td>
+                                <td><span class="badge badge-status status-amber">Needs Review</span></td>
+                            </tr>
+                            <tr>
+                                <td>SYNTHETIC PATIENT BETA (SYN-P-0002)</td>
+                                <td>Thyroid Panel</td>
+                                <td>External lab</td>
+                                <td><span class="badge badge-status status-green">Validated</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Screen 2: Upload -->
+            <div id="upload" class="screen">
+                <h2>Upload Reports</h2>
+                <div class="card">
+                    <div style="margin-bottom: 16px;">
+                        <label>Source: </label>
+                        <select style="padding:4px 8px; border-radius:4px; border:1px solid var(--border);">
+                            <option>Lifecare</option>
+                            <option>External</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="dropzone" id="dz" onclick="simulateUpload()">
+                        Drag and drop files here, or click to browse.<br><br>
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); simulateUpload()">Upload sample reports</button>
+                    </div>
+                    
+                    <div id="upload-list" style="display:none; margin-top:24px;">
+                        <h4>Processing Files...</h4>
+                        <div id="ufile-1" style="border:1px solid var(--border); padding:12px; margin-top:8px; border-radius:4px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <b>CBC_report.pdf</b>
+                                <span class="badge badge-status status-blue" style="position:relative;">Digital PDF <div class="annotation" style="top:50%;left:-20px;">2</div></span>
+                            </div>
+                            <div class="progress-text" style="font-size:12px; color:var(--text-muted)">Uploaded</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 3: Review -->
+            <div id="review" class="screen" style="position:relative;">
+                <div class="annotation" style="top:0;left:120px;">3</div>
+                <h2>Review Queue <span style="font-size:14px; font-weight:normal; color:var(--text-muted);">(1 of 17)</span></h2>
+                <div class="split-view">
+                    <div class="split-pane">
+                        <div style="padding:16px; border-bottom:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between;">
+                            <b>Original Report</b>
+                            <span>SYN-P-0001 • 14-03-2024</span>
+                        </div>
+                        <div class="mock-report">
+                            <h3 style="text-align:center; margin-bottom:24px;">LIFECARE DIAGNOSTICS</h3>
+                            <p>Patient: SYNTHETIC PATIENT ALPHA</p>
+                            <p>Date: 14-03-2024</p>
+                            <p>Test: Complete Blood Count</p>
+                            <hr style="margin:16px 0;">
+                            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
+                                <span style="width:150px">Test</span>
+                                <span style="width:100px">Result</span>
+                                <span style="width:100px">Units</span>
+                                <span style="width:150px">Ref Range</span>
+                            </div>
+                            <div class="highlight-row" style="display:flex; justify-content:space-between; padding:4px 0; position:relative;">
+                                <span style="width:150px">Hemoglobin</span>
+                                <span style="width:100px; color:var(--red); font-weight:bold;">11.8 (L)</span>
+                                <span style="width:100px">g/dL</span>
+                                <span style="width:150px">12.0-15.5</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; padding:4px 0;">
+                                <span style="width:150px">WBC</span>
+                                <span style="width:100px">6.2</span>
+                                <span style="width:100px">thou/uL</span>
+                                <span style="width:150px">4.5-11.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="split-pane">
+                        <div style="padding:16px; border-bottom:1px solid var(--border); background:var(--bg);">
+                            <b>Extracted Data Validation</b>
+                        </div>
+                        <div style="padding:16px; overflow-y:auto; flex:1;">
+                            <table>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Value</th>
+                                    <th>Conf.</th>
+                                    <th>Source</th>
+                                </tr>
+                                <tr>
+                                    <td>Patient ID</td>
+                                    <td><input type="text" value="SYN-P-0001" style="padding:4px; width:100px;"></td>
+                                    <td><span style="color:var(--green)">99%</span></td>
+                                    <td><a href="#" style="font-size:12px">pg 1, header</a></td>
+                                </tr>
+                                <tr>
+                                    <td>Test Name</td>
+                                    <td><input type="text" value="Hemoglobin" style="padding:4px; width:100px;"></td>
+                                    <td><span style="color:var(--green)">98%</span></td>
+                                    <td><a href="#" style="font-size:12px">pg 1, row 1</a></td>
+                                </tr>
+                                <tr style="background:var(--amber-bg)">
+                                    <td>Result</td>
+                                    <td><input type="text" value="11.8" style="padding:4px; width:100px; border:1px solid var(--amber)"></td>
+                                    <td><span style="color:var(--amber)">72%</span></td>
+                                    <td><a href="#" style="font-size:12px">pg 1, row 1</a></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style="padding:16px; border-top:1px solid var(--border); display:flex; gap:8px; background:var(--bg);">
+                            <button class="btn btn-outline">Reject</button>
+                            <button class="btn btn-primary" onclick="showToast()" style="margin-left:auto;">Approve & Save to Synapse</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 4: Library -->
+            <div id="library" class="screen">
+                <h2>Report Library</h2>
+                <div class="card" style="padding:12px 24px; display:flex; gap:16px; align-items:center;">
+                    <b>Filters:</b>
+                    <select><option>Patient ALPHA (SYN-P-0001)</option><option>All Patients</option></select>
+                    <select><option>All Tests</option><option>CBC</option></select>
+                    <select><option>All Sources</option><option>Lifecare</option></select>
+                    <button class="btn btn-outline" style="padding:4px 8px">Apply</button>
+                </div>
+                
+                <div class="card" style="flex:1;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Test Type</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>25-09-2026</td>
+                                <td>SYNTHETIC PATIENT ALPHA</td>
+                                <td>CBC</td>
+                                <td>Lifecare</td>
+                                <td><span class="badge badge-status status-green">Validated</span></td>
+                                <td><button class="btn btn-outline" style="padding:4px 8px" onclick="alert('Drawer opens')">View</button></td>
+                            </tr>
+                            <tr>
+                                <td>03-11-2025</td>
+                                <td>SYNTHETIC PATIENT ALPHA</td>
+                                <td>Lipid Profile</td>
+                                <td>Lifecare</td>
+                                <td><span class="badge badge-status status-green">Validated</span></td>
+                                <td><button class="btn btn-outline" style="padding:4px 8px" onclick="alert('Drawer opens')">View</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Screen 5: Timeline -->
+            <div id="timeline" class="screen">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h2>SYNTHETIC PATIENT ALPHA <span style="font-size:16px; color:var(--text-muted); font-weight:normal">SYN-P-0001</span></h2>
+                        <div style="font-size:14px; color:var(--text-muted);">5 Reports Total</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:16px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                    <div style="font-weight:600; color:var(--primary); border-bottom:2px solid var(--primary); padding-bottom:4px; cursor:pointer;">Hemoglobin</div>
+                    <div style="color:var(--text-muted); cursor:pointer;">Thyroid</div>
+                    <div style="color:var(--text-muted); cursor:pointer;">Lipids</div>
+                    <div style="color:var(--text-muted); cursor:pointer;">All</div>
+                </div>
+
+                <div class="split-view">
+                    <div class="card" style="width:250px; overflow-y:auto;">
+                        <h4 style="margin-bottom:16px;">History</h4>
+                        <div style="border-left:2px solid var(--border); padding-left:16px; margin-left:8px;">
+                            <div style="position:relative; margin-bottom:24px;">
+                                <div style="position:absolute; width:10px; height:10px; border-radius:50%; background:var(--primary); left:-22px; top:4px;"></div>
+                                <b style="font-size:14px;">25-09-2026</b>
+                                <div style="font-size:12px; color:var(--text-muted)">CBC • Lifecare</div>
+                            </div>
+                            <div style="position:relative; margin-bottom:24px;">
+                                <div style="position:absolute; width:10px; height:10px; border-radius:50%; background:var(--primary); left:-22px; top:4px;"></div>
+                                <b style="font-size:14px;">09-02-2025</b>
+                                <div style="font-size:12px; color:var(--text-muted)">CBC • Lifecare</div>
+                            </div>
+                            <div style="position:relative;">
+                                <div style="position:absolute; width:10px; height:10px; border-radius:50%; background:var(--amber); left:-22px; top:4px;"></div>
+                                <b style="font-size:14px;">14-03-2024</b>
+                                <div style="font-size:12px; color:var(--text-muted)">CBC • Lifecare</div>
+                                <div style="font-size:12px; color:var(--red); font-weight:bold;">Flagged Low</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="flex:1;">
+                        <h3 style="margin-bottom:16px;">Hemoglobin Trend (g/dL) <div class="annotation" style="display:inline-flex;position:relative;transform:none;top:-4px;left:4px;">4</div></h3>
+                        <div class="chart-container" style="position:relative;">
+                            <!-- SVG Chart -->
+                            <svg width="100%" height="100%" viewBox="0 0 500 250" preserveAspectRatio="none">
+                                <!-- Grid -->
+                                <line x1="0" y1="50" x2="500" y2="50" stroke="var(--border)" stroke-dasharray="4"/>
+                                <line x1="0" y1="150" x2="500" y2="150" stroke="var(--border)" stroke-dasharray="4"/>
+                                <line x1="0" y1="250" x2="500" y2="250" stroke="var(--border)" stroke-dasharray="4"/>
+                                
+                                <!-- Ref Range (12.0 - 15.5 roughly mapped) -->
+                                <rect x="0" y="50" width="500" height="150" fill="rgba(5, 150, 105, 0.1)" />
+                                
+                                <!-- Line -->
+                                <polyline points="50,220 250,190 450,160" fill="none" stroke="var(--primary)" stroke-width="3"/>
+                                
+                                <!-- Points -->
+                                <circle cx="50" cy="220" r="6" fill="var(--red)"/>
+                                <circle cx="250" cy="190" r="6" fill="var(--primary)"/>
+                                <circle cx="450" cy="160" r="6" fill="var(--primary)"/>
+                                
+                                <!-- Labels -->
+                                <text x="50" y="240" font-size="12" fill="var(--text-muted)" text-anchor="middle">Mar '24</text>
+                                <text x="250" y="240" font-size="12" fill="var(--text-muted)" text-anchor="middle">Feb '25</text>
+                                <text x="450" y="240" font-size="12" fill="var(--text-muted)" text-anchor="middle">Sep '26</text>
+                            </svg>
+                            <div style="position:absolute; top:8px; right:16px; font-size:12px; color:var(--text-muted);">
+                                Shaded area: Illustrative reference range (12.0-15.5)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 6: AI Assistant -->
+            <div id="ai" class="screen">
+                <div style="background:var(--amber-bg); color:var(--amber); padding:12px; border-radius:var(--radius); font-weight:600; text-align:center; font-size:14px; position:relative;">
+                    AI output is decision support and requires clinical validation.
+                    <div class="annotation" style="top:50%;left:-10px;">5</div>
+                </div>
+
+                <div class="split-view">
+                    <div class="card chat-area">
+                        <div class="chat-msg chat-user">
+                            Show me the Hemoglobin history of SYNTHETIC PATIENT ALPHA.
+                        </div>
+                        <div id="ai-loading" class="chat-msg chat-ai" style="display:none; color:var(--text-muted);">
+                            Retrieving data...
+                        </div>
+                        <div id="ai-response" class="chat-msg chat-ai" style="display:none;">
+                            <b>Summary:</b><br>
+                            Patient ALPHA has 3 CBC reports on file. Hemoglobin levels have shown a steady increase from 11.8 g/dL (Low) in Mar 2024 to 12.4 g/dL (Normal) in Sep 2026.<br><br>
+                            <b>Trend Note:</b><br>
+                            The initial reading was below the reference range (12.0-15.5 g/dL), but subsequent readings in 2025 and 2026 have returned to normal levels.<br><br>
+                            <div style="display:flex; gap:8px; margin-top:12px;">
+                                <span class="badge badge-synthetic" style="background:white; cursor:pointer;">Source: Mar '24 CBC</span>
+                                <span class="badge badge-synthetic" style="background:white; cursor:pointer;">Source: Feb '25 CBC</span>
+                                <span class="badge badge-synthetic" style="background:white; cursor:pointer;">Source: Sep '26 CBC</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="width:300px; display:flex; flex-direction:column;">
+                        <b style="border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">Retrieved Data Used</b>
+                        <div style="font-size:12px; display:flex; flex-direction:column; gap:8px; overflow-y:auto;">
+                            <div style="background:var(--bg); padding:8px; border-radius:4px;">
+                                <i>14-03-2024 • CBC</i><br>
+                                Hemoglobin: 11.8 g/dL (Ref: 12.0-15.5)
+                            </div>
+                            <div style="background:var(--bg); padding:8px; border-radius:4px;">
+                                <i>09-02-2025 • CBC</i><br>
+                                Hemoglobin: 12.1 g/dL (Ref: 12.0-15.5)
+                            </div>
+                            <div style="background:var(--bg); padding:8px; border-radius:4px;">
+                                <i>25-09-2026 • CBC</i><br>
+                                Hemoglobin: 12.4 g/dL (Ref: 12.0-15.5)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:16px;">
+                    <div style="flex:1; position:relative;">
+                        <input type="text" id="ai-input" value="Show me the Hemoglobin history of this patient" style="width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:var(--radius); outline:none;">
+                    </div>
+                    <button class="btn btn-primary" onclick="simulateAI()">Send</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Right Annotation Panel -->
+    <div class="annotation-panel">
+        <h3 style="margin-bottom:16px;">Notes</h3>
+        <ul style="list-style:none; display:flex; flex-direction:column; gap:16px; font-size:14px;">
+            <li><span style="font-weight:bold; color:var(--primary);">1.</span> Stage 5: Structured database linked to original report. (Dashboard aggregates)</li>
+            <li><span style="font-weight:bold; color:var(--primary);">2.</span> Stage 2: Detect format (Digital PDF identified).</li>
+            <li><span style="font-weight:bold; color:var(--primary);">3.</span> Stage 4: Validate (Schema checks + human review). Highlights link data to source.</li>
+            <li><span style="font-weight:bold; color:var(--primary);">4.</span> Stage 6: Chronological patient history visualised.</li>
+            <li><span style="font-weight:bold; color:var(--primary);">5.</span> Stage 8: AI layer summarising only retrieved data, with clear clinical disclaimer.</li>
+        </ul>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">Validated and saved successfully.</div>
+
+    <script>
+        // Navigation
+        function nav(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById(screenId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Annotations toggle
+        function toggleAnnotations() {
+            document.body.classList.toggle('annotations-on');
+        }
+
+        // Toast
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Simulate Upload Process
+        function simulateUpload() {
+            const list = document.getElementById('upload-list');
+            list.style.display = 'block';
+            const text = list.querySelector('.progress-text');
+            
+            const steps = [
+                "Uploaded",
+                "Format detected: Digital PDF",
+                "Text extracted",
+                "Fields extracted",
+                "Awaiting validation"
+            ];
+            
+            let i = 0;
+            const interval = setInterval(() => {
+                if(i < steps.length) {
+                    text.innerText = steps[i];
+                    if (i === steps.length - 1) {
+                        text.style.color = "var(--amber)";
+                        text.style.fontWeight = "bold";
+                    }
+                    i++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 800);
+        }
+
+        // Simulate AI
+        function simulateAI() {
+            document.getElementById('ai-input').value = "";
+            document.getElementById('ai-response').style.display = 'none';
+            const loading = document.getElementById('ai-loading');
+            loading.style.display = 'block';
+            
+            setTimeout(() => {
+                loading.style.display = 'none';
+                document.getElementById('ai-response').style.display = 'block';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

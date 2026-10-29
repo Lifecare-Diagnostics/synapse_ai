@@ -1,0 +1,16 @@
+SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA
+
+Patient: Isha Testerson
+Patient ID: SYN-1005
+Age/Sex: 35 years / Female
+Report Date: 2026-04-15
+Department: Immunoassay
+
+T3: 112 ng/dL (Reference 60 - 181)
+T4: 8.6 ug/dL (Reference 3.2 - 12.6)
+TSH: 3.10 uIU/mL (Reference 0.55 - 4.78)
+
+Sample Type: Serum
+Method: CMIA
+
+Interpretation note: Results should be correlated with clinical findings.

@@ -1,0 +1,99 @@
+/* screens.css: Screen specific styles */
+.screen {
+    display: none;
+    height: 100%;
+}
+
+.screen.active {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px;
+    text-align: center;
+    background: var(--bg);
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.split-view {
+    display: flex;
+    gap: 24px;
+    height: 100%;
+}
+
+.split-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.mock-report {
+    padding: 40px;
+    font-family: monospace;
+    overflow-y: auto;
+}
+
+.highlight-row {
+    background: rgba(217, 119, 6, 0.2);
+    outline: 2px solid var(--amber);
+}
+
+.chart-container {
+    height: 300px;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding-bottom: 16px;
+}
+
+.chat-msg {
+    padding: 16px;
+    border-radius: var(--radius);
+    max-width: 80%;
+}
+
+.chat-user {
+    background: var(--primary-light);
+    align-self: flex-end;
+}
+
+.chat-ai {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    align-self: flex-start;
+}

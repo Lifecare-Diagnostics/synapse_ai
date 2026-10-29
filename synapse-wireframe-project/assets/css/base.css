@@ -1,0 +1,26 @@
+/* base.css: Reset and CSS variables */
+:root {
+    --primary: #1F3A5F;
+    --primary-light: #F0F4F8;
+    --surface: #FFFFFF;
+    --bg: #F5F7FA;
+    --text-main: #1A202C;
+    --text-muted: #718096;
+    --border: #E2E8F0;
+    --amber: #D97706;
+    --amber-bg: #FEF3C7;
+    --green: #059669;
+    --green-bg: #D1FAE5;
+    --red: #DC2626;
+    --red-bg: #FEE2E2;
+    --radius: 8px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --transition: all 0.2s ease-in-out;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+}
