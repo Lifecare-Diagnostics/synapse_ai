@@ -1,0 +1,8 @@
+SYNTHETIC TEST DOCUMENT - NOT REAL PATIENT DATA
+
+Patient: Test Person
+Age/Sex: 45 / Male
+Report Date: 2026-06-03
+Report: Fasting Biochemistry
+
+Fasting Glucose: 101 mg/dL (Reference 70 - 110)

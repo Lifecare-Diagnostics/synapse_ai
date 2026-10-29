@@ -27,14 +27,15 @@ All 10 synthetic text files, 5 digitally generated PDF files (with real text lay
 | **PDF & Messy Test Generation** | 5 digital PDF files generated using `fpdf2` in `data/pdf_samples/`. 2 malformed test files in `data/messy/` (one missing date, one missing unit). | **Verified by running**: PyMuPDF text layer inspection. |
 | **Document Reader** | `synapse_poc/synapse/reader.py` with `read_text_file()` and `read_pdf_text()` using PyMuPDF. Clean fallback to `"needs OCR - not supported yet"` for empty text layers. | **Verified by running**: 4/4 pytest tests passing (`tests/test_reader.py`). |
 | **Extractor Interface & Engine** | `synapse_poc/synapse/extractor.py` featuring an abstract `Extractor` base class, marked LLM replacement placeholder, and regex-based `RuleBasedExtractor`. | **Verified by running**: 17/17 files processed cleanly. |
-| **Validator & Flag Engine** | `synapse_poc/synapse/validator.py` with ISO date checking, unit normalization (`gm/dL` $\rightarrow$ `g/dL`), and boundary-value flag calculation (`Up to X`, `Less than X`, and ranges). | **Verified by running**: 6/6 pytest tests passing (`tests/test_extractor_validator.py`). |
+| **Validator & Flag Engine** | `synapse_poc/synapse/validator.py` with ISO date checking, unit normalization (`gm/dL` $\rightarrow$ `g/dL`), and boundary-value flag calculation (`Up to X`, `Less than X`, and ranges). Phase 2: `_check_implausible_value()` added for negative-value detection. | **Verified by running**: 6/6 pytest tests passing (`tests/test_extractor_validator.py`). |
 | **Evaluation Suite** | `synapse_poc/scripts/evaluate.py` running automated comparisons against `ground_truth.json`. Documented in `docs/EVALUATION.md`. | **Verified by running**: 100% field accuracy (352/352 fields across 17 files). |
+| **Phase 2: Extraction Review & Flagging** | `synapse/reviewer.py` — `ExtractionReviewer` attaches structured `ReviewFlag` objects for unrecognised tests, missing values, missing units, missing reference ranges, unparseable flag computation, missing document dates, missing patient IDs, and ambiguous source text. `schema.py` extended with `ReviewFlag` model, `LabResult.review_flags`, `LabResult.extraction_status`, `ExtractedDocument.review_flags`, `ExtractedDocument.extraction_summary`. 4 new synthetic messy test fixtures added. | **Verified by running**: 18/18 pytest tests passing. 100% field accuracy maintained. |
 
 ---
 
 ## 3. Test & Verification Evidence
 
-- **Pytest Suite:** 10 passed out of 10 tests in 1.36s.
+- **Pytest Suite:** 18 passed out of 18 tests in 1.37s (10 original + 8 Phase 2 new tests).
   ```powershell
   .venv\Scripts\pytest.exe -v
   tests/test_extractor_validator.py::test_extractor_lab_report PASSED
@@ -43,12 +44,20 @@ All 10 synthetic text files, 5 digitally generated PDF files (with real text lay
   tests/test_extractor_validator.py::test_unit_normalisation PASSED
   tests/test_extractor_validator.py::test_messy_file_missing_date PASSED
   tests/test_extractor_validator.py::test_messy_file_missing_unit PASSED
+  tests/test_extractor_validator.py::test_unknown_test_name_flagged PASSED
+  tests/test_extractor_validator.py::test_missing_value_flagged PASSED
+  tests/test_extractor_validator.py::test_missing_unit_flagged PASSED
+  tests/test_extractor_validator.py::test_missing_date_document_flag PASSED
+  tests/test_extractor_validator.py::test_missing_patient_id_document_flag PASSED
+  tests/test_extractor_validator.py::test_negative_value_validation_error PASSED
+  tests/test_extractor_validator.py::test_extraction_summary_counts PASSED
+  tests/test_extractor_validator.py::test_no_false_flags_on_clean_document PASSED
   tests/test_reader.py::test_every_input_txt_reads PASSED
   tests/test_reader.py::test_every_generated_pdf_contains_patient_name PASSED
   tests/test_reader.py::test_missing_files_give_clear_results PASSED
   tests/test_reader.py::test_empty_pdf_gives_needs_ocr_result PASSED
   ```
-- **Evaluation Script:** 17/17 files passed (352/352 fields correct).
+- **Evaluation Script:** 17/17 ground-truth files passed (352/352 fields correct). Phase 2 review flags summary included in EVALUATION.md.
 
 ---
 

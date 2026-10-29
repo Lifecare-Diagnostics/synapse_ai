@@ -69,11 +69,27 @@ class DocumentValidator:
                 if "ratio" not in res.test_name.lower():
                     errors.append(f"Missing unit for test: {res.test_name}")
 
+            # Check for implausible values
+            errors.extend(self._check_implausible_value(res))
+
             # Calculate clinical flag against reference range
             res.flag = self._calculate_flag(res)
 
         doc.validation_errors = errors
         return doc
+
+    def _check_implausible_value(self, res) -> list:
+        """
+        Returns a list of validation error strings for implausible numeric values.
+        Implausible: negative values for tests that must be >= 0.
+        Does NOT change the value.
+        """
+        issues = []
+        if res.result_value is not None and res.result_value < 0:
+            issues.append(
+                f"Implausible negative result value {res.result_value} for test: {res.test_name}"
+            )
+        return issues
 
     def _is_valid_iso_date(self, date_str: str) -> bool:
         if not re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):

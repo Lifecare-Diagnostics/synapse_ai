@@ -14,6 +14,7 @@ import json
 from synapse.reader import read_text_file, read_pdf_text
 from synapse.extractor import RuleBasedExtractor
 from synapse.validator import DocumentValidator
+from synapse.reviewer import ExtractionReviewer
 
 WORKSPACE_ROOT = os.path.dirname(BASE_DIR)
 LOCAL_INPUT_DIR = os.path.join(BASE_DIR, "data", "synthetic_inputs")
@@ -31,6 +32,7 @@ with open(GROUND_TRUTH_PATH, "r", encoding="utf-8") as f:
 
 extractor = RuleBasedExtractor()
 validator = DocumentValidator()
+reviewer = ExtractionReviewer()
 
 # Files to evaluate: (filepath, file_type, gt_lookup_key)
 eval_files = []
@@ -77,6 +79,7 @@ for filepath, filetype, gt_key in eval_files:
 
     doc = extractor.extract(raw_text, source_file=filename)
     doc = validator.validate(doc)
+    doc = reviewer.review(doc)
 
     file_failed_fields = []
 
@@ -147,6 +150,8 @@ for filepath, filetype, gt_key in eval_files:
         "found_labs": found_count,
         "extra_labs": extra_count,
         "failures": file_failed_fields,
+        "review_summary": doc.extraction_summary,
+        "doc_flags": [f.model_dump() for f in doc.review_flags],
     })
 
 # Summary calculations
@@ -236,7 +241,16 @@ else:
         for fail in fails:
             eval_md += f"- **Issue:** {fail}\n"
 
+# Phase 2: Review flags section
+phase2_md = "\n---\n\n## 4. Phase 2 — Extraction Review Flags Summary\n\n"
+phase2_md += "| File | ok | needs_review | unsupported | Doc-Level Flags |\n"
+phase2_md += "| :--- | :--- | :--- | :--- | :--- |\n"
+for fr in file_reports:
+    rs = fr.get("review_summary", {})
+    doc_flag_count = len(fr.get("doc_flags", []))
+    phase2_md += f"| `{fr['file']}` | {rs.get('ok', 0)} | {rs.get('needs_review', 0)} | {rs.get('unsupported', 0)} | {doc_flag_count} |\n"
+
 with open(EVAL_DOC_PATH, "w", encoding="utf-8") as f:
-    f.write(eval_md)
+    f.write(eval_md + phase2_md)
 
 print(f"\nSaved evaluation markdown to {EVAL_DOC_PATH}")

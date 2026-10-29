@@ -1,0 +1,9 @@
+SYNTHETIC TEST DOCUMENT - NOT REAL PATIENT DATA
+
+Patient: Test Person
+Patient ID: SYN-9002
+Age/Sex: 30 / Female
+Report Date: 2026-06-02
+Report: Fasting Biochemistry
+
+Fasting Glucose: 95 mg/dL (Reference 70 - 110)

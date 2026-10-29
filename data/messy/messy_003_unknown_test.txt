@@ -1,0 +1,10 @@
+SYNTHETIC TEST DOCUMENT - NOT REAL PATIENT DATA
+
+Patient: Test Person
+Patient ID: SYN-9001
+Age/Sex: 40 / Male
+Report Date: 2026-06-01
+Report: Fasting Biochemistry
+
+Fasting Glucose: 95 mg/dL (Reference 70 - 110)
+XyloProtein-Q7: 3.4 mg/dL (Reference 1.0 - 5.0)
