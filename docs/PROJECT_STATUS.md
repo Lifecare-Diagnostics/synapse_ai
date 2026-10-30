@@ -30,14 +30,28 @@ All 10 synthetic text files, 5 digitally generated PDF files (with real text lay
 | **Validator & Flag Engine** | `synapse_poc/synapse/validator.py` with ISO date checking, unit normalization (`gm/dL` $\rightarrow$ `g/dL`), and boundary-value flag calculation (`Up to X`, `Less than X`, and ranges). Phase 2: `_check_implausible_value()` added for negative-value detection. | **Verified by running**: 6/6 pytest tests passing (`tests/test_extractor_validator.py`). |
 | **Evaluation Suite** | `synapse_poc/scripts/evaluate.py` running automated comparisons against `ground_truth.json`. Documented in `docs/EVALUATION.md`. | **Verified by running**: 100% field accuracy (352/352 fields across 17 files). |
 | **Phase 2: Extraction Review & Flagging** | `synapse/reviewer.py` — `ExtractionReviewer` attaches structured `ReviewFlag` objects for unrecognised tests, missing values, missing units, missing reference ranges, unparseable flag computation, missing document dates, missing patient IDs, and ambiguous source text. `schema.py` extended with `ReviewFlag` model, `LabResult.review_flags`, `LabResult.extraction_status`, `ExtractedDocument.review_flags`, `ExtractedDocument.extraction_summary`. 4 new synthetic messy test fixtures added. | **Verified by running**: 18/18 pytest tests passing. 100% field accuracy maintained. |
+| **Phase 3 Stage 1: Data Foundation & Storage** | `synapse/schema.py` extended with `MedicalHistoryEntry`, `PatientDemographics`, `ReportParameter`, `PatientReport`, `Patient`. `synapse/standardizer.py` for canonical mapping and 5-category abnormality classification. `synapse/storage.py` SQLite relational repository with foreign keys, chronological sorting, calendar grouping, longitudinal retrieval, and adapter for extracted documents and API payloads. | **Verified by running**: 26/26 pytest tests passing (`tests/test_wallet_storage.py`). |
+| **Phase 3 Stage 2: Web Interface & API Integration** | `synapse/api.py` FastAPI backend with REST endpoints for patient profiles, chronological records, filters, calendar view, 4-box abnormal summary, longitudinal trends with unit compatibility checks, mock JSON ingestion, multipart file uploads (.txt, .pdf, .json), duplicate detection (409 Conflict), and OCR identification. Web frontend (`synapse/static/index.html`, `style.css`, `app.js`) with responsive clinical UI, SVG trend line charts, and interactive calendar. | **Verified by running**: 38/38 pytest tests passing (`tests/test_api.py`). Local seeding and live API verified. |
 
 ---
 
 ## 3. Test & Verification Evidence
 
-- **Pytest Suite:** 18 passed out of 18 tests in 1.37s (10 original + 8 Phase 2 new tests).
+- **Pytest Suite:** 38 passed out of 38 tests in 2.35s (10 Phase 1 + 8 Phase 2 + 8 Phase 3 Stage 1 + 12 Phase 3 Stage 2).
   ```powershell
   .venv\Scripts\pytest.exe -v
+  tests/test_api.py::test_api_list_patients PASSED
+  tests/test_api.py::test_api_get_patient_details PASSED
+  tests/test_api.py::test_api_list_patient_reports_chronological PASSED
+  tests/test_api.py::test_api_report_filters PASSED
+  tests/test_api.py::test_api_calendar_view PASSED
+  tests/test_api.py::test_api_report_details_and_abnormal_summary PASSED
+  tests/test_api.py::test_api_longitudinal_trends PASSED
+  tests/test_api.py::test_api_available_parameters PASSED
+  tests/test_api.py::test_api_ingest_json_report PASSED
+  tests/test_api.py::test_api_ingest_json_validation_error PASSED
+  tests/test_api.py::test_api_file_upload_text[asyncio] PASSED
+  tests/test_api.py::test_api_file_upload_scanned_pdf_needs_ocr[asyncio] PASSED
   tests/test_extractor_validator.py::test_extractor_lab_report PASSED
   tests/test_extractor_validator.py::test_reference_range_boundary_values PASSED
   tests/test_extractor_validator.py::test_no_reference_range_yields_unknown_flag PASSED
@@ -56,6 +70,14 @@ All 10 synthetic text files, 5 digitally generated PDF files (with real text lay
   tests/test_reader.py::test_every_generated_pdf_contains_patient_name PASSED
   tests/test_reader.py::test_missing_files_give_clear_results PASSED
   tests/test_reader.py::test_empty_pdf_gives_needs_ocr_result PASSED
+  tests/test_wallet_storage.py::test_patient_demographics_crud PASSED
+  tests/test_wallet_storage.py::test_medical_history_linking PASSED
+  tests/test_wallet_storage.py::test_multiple_reports_linked_to_one_patient_chronologically PASSED
+  tests/test_wallet_storage.py::test_report_filters_and_parameter_search PASSED
+  tests/test_wallet_storage.py::test_calendar_view_grouping PASSED
+  tests/test_wallet_storage.py::test_longitudinal_parameters_trend PASSED
+  tests/test_wallet_storage.py::test_abnormal_summary_categorization PASSED
+  tests/test_wallet_storage.py::test_api_json_record_ingestion PASSED
   ```
 - **Evaluation Script:** 17/17 ground-truth files passed (352/352 fields correct). Phase 2 review flags summary included in EVALUATION.md.
 
@@ -63,8 +85,7 @@ All 10 synthetic text files, 5 digitally generated PDF files (with real text lay
 
 ## 4. Current Limitations & What Remains Incomplete
 
-1. **OCR Layer:** Scanned images and non-searchable PDFs return `"needs OCR - not supported yet"`. (Intentionally omitted per POC scope).
+1. **OCR Layer:** Scanned images and non-searchable PDFs return `"needs OCR - not supported yet"` and are flagged as `ocr_required`. (Intentionally omitted per POC scope).
 2. **LLM Extraction:** The extractor currently runs deterministic regex rules. The `Extractor` interface is in place with a documented placeholder for future LLM integration.
 3. **Evaluation Optimism:** Ground truth was authored against the synthetic files and the extractor tuned to those formats; real diagnostic reports will feature significantly higher variance.
-4. **Backend API / Service:** No REST API (FastAPI / Flask) has been introduced.
-5. **UI Integration:** The modular HTML/JS wireframe in `synapse-wireframe-project/` remains static mockups and has not yet been wired to the Python backend outputs.
+4. **Production DB & External Systems:** The local POC runs on SQLite (`data/synapse_wallet.db`); production EHR / LIS integration will be designed in subsequent phases.

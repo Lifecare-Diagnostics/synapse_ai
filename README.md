@@ -135,16 +135,31 @@ Execute the full test suite using `pytest`:
 ```bash
 pytest -v
 ```
-*Expected result: 10 passed tests.*
+*Expected result: 38 passed tests covering extraction, validation, review flags, wallet storage, abnormal summaries, longitudinal trends, and API endpoints.*
 
-### 2. Run the Extraction Pipeline
+### 2. Seed the Patient Digital Wallet Database
+Populate the local SQLite database (`data/synapse_wallet.db`) with synthetic patient profiles, medical histories, multi-date CBC reports, and digital API records:
+```bash
+python scripts/seed_wallet.py
+```
+
+### 3. Launch the Patient Digital Wallet Web Application
+Run the local FastAPI server with the interactive clinical dashboard:
+```bash
+uvicorn synapse.api:app --host 127.0.0.1 --port 8000
+```
+Open your browser to:
+- **Web Dashboard:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- **Interactive OpenAPI Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+### 4. Run the Extraction Pipeline
 Run extraction on all synthetic files (text files, PDFs, and messy edge cases) and save structured JSON files into `outputs/`:
 ```bash
 python scripts/run_extraction.py
 ```
 *Outputs are saved to `outputs/<filename>.json`.*
 
-### 3. Run Benchmark Evaluation
+### 5. Run Benchmark Evaluation
 Evaluate extracted outputs against `data/ground_truth.json` and generate an updated evaluation report:
 ```bash
 python scripts/evaluate.py

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life Care Diagnostics — Synapse AI Digital Wallet</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- Top Application Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">S</div>
+      <div class="brand-text">
+        <h1>Life Care Diagnostics &bull; Synapse AI</h1>
+        <p>Patient Digital Wallet &bull; Longitudinal Trend Analysis &bull; Abnormal Parameter Summary</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" id="btn-open-upload">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Report
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-target="tab-wallet">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9.5h20"/></svg>
+      Digital Wallet
+    </button>
+    <button class="nav-tab" data-target="tab-calendar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendar View
+    </button>
+    <button class="nav-tab" data-target="tab-trends">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Trend Analysis
+    </button>
+    <button class="nav-tab" data-target="tab-patients">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Patient Directory
+    </button>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- Active Patient Banner -->
+    <section class="patient-banner">
+      <div class="patient-info">
+        <h2>
+          <span id="banner-patient-name">Loading Patient...</span>
+          <span class="badge badge-info" id="banner-patient-id">SYN-1001</span>
+        </h2>
+        <div class="patient-meta">
+          <span id="banner-patient-age-sex">—</span>
+          <span id="banner-patient-dob">—</span>
+          <span id="banner-patient-reports">0 Reports</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 0.75rem; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.25rem;">Recorded Medical History</div>
+        <div id="patient-medical-history" style="display:flex; flex-direction:column; gap:0.25rem; max-width:420px;"></div>
+      </div>
+    </section>
+
+    <!-- TAB 1: Digital Wallet -->
+    <div class="tab-pane active" id="tab-wallet">
+      <!-- Filters -->
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <div class="filter-bar">
+          <div class="category-pills">
+            <span class="cat-pill active" data-category="">All Categories</span>
+            <span class="cat-pill" data-category="CBC / Hematology">CBC / Hematology</span>
+            <span class="cat-pill" data-category="Biochemistry">Biochemistry</span>
+            <span class="cat-pill" data-category="Lipid Profile">Lipid Profile</span>
+            <span class="cat-pill" data-category="Kidney Function Test">Kidney Function</span>
+            <span class="cat-pill" data-category="Thyroid Profile">Thyroid</span>
+            <span class="cat-pill" data-category="Imaging">Imaging</span>
+            <span class="cat-pill" data-category="Clinical Note">Clinical Note</span>
+            <span class="cat-pill" data-category="Prescription">Prescription</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="filter-search" placeholder="Search by test name (e.g. Haemoglobin)..." style="flex:1; min-width:240px;">
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--slate-600);">
+            <span>Date Range:</span>
+            <input type="date" id="filter-start-date">
+            <span>to</span>
+            <input type="date" id="filter-end-date">
+            <button class="btn btn-sm btn-outline" id="filter-date-clear">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chronological Reports List -->
+      <div id="reports-list-container">
+        <!-- Rendered via app.js -->
+      </div>
+    </div>
+
+    <!-- TAB 2: Calendar View -->
+    <div class="tab-pane" id="tab-calendar">
+      <div class="grid-2">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 id="calendar-month-label" style="font-size:1.1rem; font-weight:700;">April 2026</h3>
+            <div style="display:flex; gap:0.35rem;">
+              <button class="btn btn-sm btn-outline" onclick="changeMonth(-1)">&larr; Prev</button>
+              <button class="btn btn-sm btn-outline" onclick="changeMonth(1)">Next &rarr;</button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendar-grid">
+            <!-- Rendered via app.js -->
+          </div>
+          <div id="calendar-unknown-dates-container"></div>
+        </div>
+
+        <div class="card" id="calendar-date-reports">
+          <h4 style="margin-bottom:0.75rem; color:var(--slate-600);">Select a date on the calendar</h4>
+          <p style="font-size:0.85rem; color:var(--slate-500);">Click on any highlighted date in the calendar to view reports registered on that day.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Longitudinal Trend Analysis -->
+    <div class="tab-pane" id="tab-trends">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 style="font-size:1.1rem; font-weight:700;">Longitudinal Parameter Trend Analysis</h3>
+            <p style="font-size:0.8rem; color:var(--slate-500);">Connects identical laboratory parameters across chronological reports. No interpolated or invented data.</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <label for="trend-parameter-select" style="font-size:0.85rem; font-weight:600;">Parameter:</label>
+            <select id="trend-parameter-select" style="min-width:220px;"></select>
+          </div>
+        </div>
+
+        <div id="trend-unit-warning"></div>
+
+        <div class="chart-container">
+          <svg class="chart-svg" id="trend-chart-svg"></svg>
+        </div>
+
+        <div style="margin-top:1.5rem;">
+          <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:0.75rem;">Historical Observations Data</h4>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Report Date</th>
+                  <th>Extracted Name</th>
+                  <th>Result Value</th>
+                  <th>Unit</th>
+                  <th>Reference Range</th>
+                  <th>Clinical Flag</th>
+                </tr>
+              </thead>
+              <tbody id="trend-table-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Patient Directory -->
+    <div class="tab-pane" id="tab-patients">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <h3 style="font-size:1.1rem; font-weight:700;">Synthetic Patient Directory</h3>
+          <input type="text" id="patient-search-input" placeholder="Search by name or ID..." style="width:260px;">
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Patient ID</th>
+                <th>Patient Name</th>
+                <th>Age / Sex</th>
+                <th>Total Reports</th>
+                <th>Latest Report Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="patients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Report Details & Abnormal Summary Modal -->
+  <div class="modal-overlay" id="report-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h3 style="font-size:1.1rem; font-weight:700;">Medical Report Details</h3>
+          <div style="font-size:0.8rem; color:var(--slate-500);">
+            Report ID: <span id="modal-report-id" style="font-weight:600;"></span> &bull;
+            Patient: <span id="modal-patient-id" style="font-weight:600;"></span>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeReportModal()">&times;</button>
+      </div>
+
+      <!-- Report Metadata Header -->
+      <div style="display:flex; gap:1.5rem; background:var(--slate-100); padding:0.75rem 1rem; border-radius:var(--radius); font-size:0.8rem; margin-bottom:1.25rem;">
+        <div><strong>Date:</strong> <span id="modal-report-date"></span></div>
+        <div><strong>Category:</strong> <span id="modal-report-category"></span></div>
+        <div><strong>Format:</strong> <span id="modal-report-format"></span></div>
+        <div><strong>Extraction:</strong> <span id="modal-report-status"></span></div>
+      </div>
+
+      <!-- 4-Card Abnormal Parameter Summary -->
+      <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:0.75rem;">Abnormal Parameter Summary (Source Report Ranges)</h4>
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="abnormal-box below">
+          <div class="abnormal-box-title" style="color:var(--danger);">
+            <span>Below Range</span>
+            <span class="badge badge-danger">Low</span>
+          </div>
+          <div id="box-below"></div>
+        </div>
+
+        <div class="abnormal-box above">
+          <div class="abnormal-box-title" style="color:#ea580c;">
+            <span>Above Range</span>
+            <span class="badge badge-warning">High</span>
+          </div>
+          <div id="box-above"></div>
+        </div>
+
+        <div class="abnormal-box normal">
+          <div class="abnormal-box-title" style="color:var(--success);">
+            <span>Within Range</span>
+            <span class="badge badge-success">Normal</span>
+          </div>
+          <div id="box-normal"></div>
+        </div>
+
+        <div class="abnormal-box review">
+          <div class="abnormal-box-title" style="color:var(--warning);">
+            <span>Requires Review</span>
+            <span class="badge badge-neutral">Review</span>
+          </div>
+          <div id="box-review"></div>
+        </div>
+      </div>
+
+      <!-- Key Narrative Sections -->
+      <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:0.5rem;">Key Narrative Sections</h4>
+      <div id="modal-sections" style="background:#fff; border:1px solid var(--slate-200); border-radius:var(--radius); padding:0.85rem; margin-bottom:1.25rem;"></div>
+
+      <!-- Review Flags & Validation Errors -->
+      <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:0.5rem;">Extraction Review Flags & Validation Audit</h4>
+      <div id="modal-flags" style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:0.85rem;"></div>
+    </div>
+  </div>
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="upload-modal">
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h3 style="font-size:1.1rem; font-weight:700;">Upload & Ingest Medical Report</h3>
+        <button class="modal-close" id="upload-modal-close">&times;</button>
+      </div>
+
+      <form id="upload-form">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">Select Document (.txt, .pdf, .json):</label>
+          <input type="file" id="upload-file-input" accept=".txt,.pdf,.json" required style="width:100%;">
+          <p style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">
+            PyMuPDF digital text layer extracted for PDFs. Scanned PDFs are marked as requiring OCR.
+          </p>
+        </div>
+
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">Associate Patient ID (Optional if in document):</label>
+          <input type="text" id="upload-patient-id" placeholder="e.g. SYN-1001" style="width:100%;">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('upload-modal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Upload & Process</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

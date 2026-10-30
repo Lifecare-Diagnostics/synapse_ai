@@ -17,3 +17,4 @@ Eosinophils: 04 %
 Monocytes: 06 %
 
 Comment: Follow-up complete blood count. Parameters within reference interval.
+

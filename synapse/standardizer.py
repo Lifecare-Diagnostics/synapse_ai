@@ -126,3 +126,4 @@ def classify_abnormality(res: LabResult) -> str:
         return "within_range"
     else:
         return "reference_range_unavailable"
+

@@ -79,6 +79,7 @@ class WalletStorage:
                 extraction_status TEXT NOT NULL,
                 review_status TEXT NOT NULL,
                 original_document_location TEXT,
+                content_hash TEXT,
                 key_text_sections_json TEXT,
                 document_level_flags_json TEXT,
                 validation_errors_json TEXT,
@@ -109,6 +110,12 @@ class WalletStorage:
             CREATE INDEX IF NOT EXISTS idx_reports_patient_date ON reports(patient_id, report_date);
             CREATE INDEX IF NOT EXISTS idx_parameters_patient_std ON parameters(patient_id, standardized_name, report_date);
             """)
+
+            # Add content_hash if table already existed without it
+            try:
+                conn.execute("ALTER TABLE reports ADD COLUMN content_hash TEXT;")
+            except Exception:
+                pass
 
     # -------------------------------------------------------------------------
     # Patient & Demographics Operations
@@ -214,15 +221,67 @@ class WalletStorage:
             )
 
     def list_patients(self) -> List[Dict[str, Any]]:
-        """List all registered patients with report counts."""
+        """List all registered patients with report counts and latest report date."""
         with self._get_connection() as conn:
             cur = conn.execute("""
-                SELECT p.*, count(r.report_id) as report_count
+                SELECT p.*, count(r.report_id) as report_count, max(r.report_date) as latest_report_date
                 FROM patients p
                 LEFT JOIN reports r ON p.patient_id = r.patient_id
                 GROUP BY p.patient_id
                 ORDER BY p.patient_name ASC;
             """)
+            return [dict(row) for row in cur.fetchall()]
+
+    def find_duplicate_report(
+        self,
+        patient_id: str,
+        original_filename: str,
+        content_hash: Optional[str] = None,
+    ) -> Optional[PatientReport]:
+        """
+        Check if an identical report has already been ingested.
+        Matches on:
+        1. content_hash (if provided), OR
+        2. same patient_id and same original_filename.
+        """
+        with self._get_connection() as conn:
+            if content_hash:
+                cur = conn.execute(
+                    "SELECT report_id FROM reports WHERE patient_id = ? AND content_hash = ?",
+                    (patient_id, content_hash),
+                )
+                row = cur.fetchone()
+                if row:
+                    return self.get_report(row["report_id"])
+
+            cur = conn.execute(
+                "SELECT report_id FROM reports WHERE patient_id = ? AND original_filename = ?",
+                (patient_id, original_filename),
+            )
+            row = cur.fetchone()
+            if row:
+                return self.get_report(row["report_id"])
+        return None
+
+    def get_available_parameters(self, patient_id: str) -> List[Dict[str, Any]]:
+        """
+        Return the list of standardized parameters with observations for this patient.
+        """
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                """
+                SELECT
+                    standardized_name,
+                    count(parameter_id) as observation_count,
+                    max(report_date) as latest_date,
+                    unit
+                FROM parameters
+                WHERE patient_id = ? AND standardized_name IS NOT NULL
+                GROUP BY standardized_name
+                ORDER BY observation_count DESC, standardized_name ASC;
+                """,
+                (patient_id,),
+            )
             return [dict(row) for row in cur.fetchall()]
 
     # -------------------------------------------------------------------------
@@ -246,9 +305,9 @@ class WalletStorage:
                 INSERT INTO reports (
                     report_id, patient_id, report_date, date_label, report_category,
                     original_filename, file_format, upload_datetime, extraction_status,
-                    review_status, original_document_location, key_text_sections_json,
+                    review_status, original_document_location, content_hash, key_text_sections_json,
                     document_level_flags_json, validation_errors_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(report_id) DO UPDATE SET
                     report_date = excluded.report_date,
                     date_label = excluded.date_label,
@@ -256,6 +315,7 @@ class WalletStorage:
                     extraction_status = excluded.extraction_status,
                     review_status = excluded.review_status,
                     original_document_location = excluded.original_document_location,
+                    content_hash = excluded.content_hash,
                     key_text_sections_json = excluded.key_text_sections_json,
                     document_level_flags_json = excluded.document_level_flags_json,
                     validation_errors_json = excluded.validation_errors_json;
@@ -272,6 +332,7 @@ class WalletStorage:
                     report.extraction_status,
                     report.review_status,
                     report.original_document_location,
+                    report.content_hash,
                     json.dumps(report.key_text_sections),
                     json.dumps([f.model_dump() for f in report.document_level_flags]),
                     json.dumps(report.validation_errors),
@@ -361,6 +422,7 @@ class WalletStorage:
                 extraction_status=r["extraction_status"],
                 review_status=r["review_status"],
                 original_document_location=r["original_document_location"],
+                content_hash=r["content_hash"] if "content_hash" in r.keys() else None,
                 parameters=params,
                 key_text_sections=sections,
                 document_level_flags=doc_flags,
@@ -536,6 +598,7 @@ class WalletStorage:
         doc: ExtractedDocument,
         original_location: Optional[str] = None,
         file_format: str = "txt",
+        content_hash: Optional[str] = None,
     ) -> PatientReport:
         """
         Bridge Phase 1/2 ExtractedDocument directly into PatientReport & ReportParameter entities.
@@ -594,7 +657,9 @@ class WalletStorage:
         else:
             rev_status = "clean"
 
-        report_id = f"REP-{uuid.uuid4().hex[:8].upper()}"
+        # Reuse existing report_id if re-ingesting identical report
+        existing = self.find_duplicate_report(patient_id, doc.source_file, content_hash=content_hash)
+        report_id = existing.report_id if existing else f"REP-{uuid.uuid4().hex[:8].upper()}"
 
         # Convert lab results to ReportParameters
         parameters: List[ReportParameter] = []
@@ -636,6 +701,7 @@ class WalletStorage:
             extraction_status=ext_status,
             review_status=rev_status,
             original_document_location=original_location or doc.source_file,
+            content_hash=content_hash,
             parameters=parameters,
             key_text_sections=doc.key_text_sections,
             document_level_flags=doc.review_flags,
@@ -645,7 +711,7 @@ class WalletStorage:
         self.save_report(report)
         return report
 
-    def ingest_api_json_record(self, data: Dict[str, Any]) -> PatientReport:
+    def ingest_api_json_record(self, data: Dict[str, Any], content_hash: Optional[str] = None) -> PatientReport:
         """
         Ingest a structured digital report payload from mock API or JSON file.
         Validates structure and normalises into PatientReport & ReportParameters.
@@ -757,6 +823,7 @@ class WalletStorage:
             extraction_status="success",
             review_status="clean" if all(p.extraction_status == "ok" for p in parameters) else "needs_review",
             original_document_location=f"api://payloads/{report_id}",
+            content_hash=content_hash,
             parameters=parameters,
             key_text_sections={"API Notes": data.get("notes", "")} if data.get("notes") else {},
             document_level_flags=[],

@@ -309,3 +309,4 @@ def test_api_json_record_ingestion(storage):
     # Confirm searchable in patient reports
     patient_reports = storage.list_patient_reports("SYN-1002")
     assert any(r.report_id == "API-BIO-999" for r in patient_reports)
+

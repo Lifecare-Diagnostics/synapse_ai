@@ -82,6 +82,7 @@ class PatientReport(BaseModel):
     extraction_status: Literal["success", "needs_review", "ocr_required", "failed"] = Field("success", description="Overall extraction outcome")
     review_status: Literal["clean", "needs_review", "unsupported_parameters"] = Field("clean", description="Overall review status")
     original_document_location: Optional[str] = Field(None, description="Path or URI to original document")
+    content_hash: Optional[str] = Field(None, description="SHA-256 hash of raw content for duplicate detection")
     parameters: List[ReportParameter] = Field(default_factory=list, description="Extracted parameters linked to this report")
     key_text_sections: Dict[str, str] = Field(default_factory=dict, description="Unstructured narrative sections")
     document_level_flags: List[ReviewFlag] = Field(default_factory=list, description="Document-level review flags")

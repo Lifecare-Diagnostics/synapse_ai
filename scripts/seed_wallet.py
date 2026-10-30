@@ -21,6 +21,8 @@ from synapse.storage import WalletStorage
 
 def seed_database(db_path: str = os.path.join(BASE_DIR, "data", "synapse_wallet.db")):
     print(f"--> Initializing wallet database at: {db_path}")
+    if os.path.exists(db_path):
+        os.remove(db_path)
     storage = WalletStorage(db_path)
     extractor = RuleBasedExtractor()
     validator = DocumentValidator()
@@ -156,3 +158,4 @@ def seed_database(db_path: str = os.path.join(BASE_DIR, "data", "synapse_wallet.
 
 if __name__ == "__main__":
     seed_database()
+
