@@ -1,0 +1,37 @@
+{
+  "source_type": "api_json",
+  "patient_id": "SYN-1002",
+  "patient_name": "Meera Sample",
+  "report_id": "API-BIO-2026-07",
+  "report_date": "2026-07-10",
+  "date_label": "Test Performed Date",
+  "report_category": "Biochemistry",
+  "specimen": "Plasma / Serum",
+  "parameters": [
+    {
+      "test_name": "Fasting Glucose",
+      "result_value": 118.0,
+      "unit": "mg/dL",
+      "reference_range_text": "70 - 110",
+      "reference_low": 70.0,
+      "reference_high": 110.0
+    },
+    {
+      "test_name": "HbA1c",
+      "result_value": 6.8,
+      "unit": "%",
+      "reference_range_text": "4.0 - 5.6",
+      "reference_low": 4.0,
+      "reference_high": 5.6
+    },
+    {
+      "test_name": "Post-Prandial Glucose",
+      "result_value": 154.0,
+      "unit": "mg/dL",
+      "reference_range_text": "Up to 140",
+      "reference_low": null,
+      "reference_high": 140.0
+    }
+  ],
+  "notes": "Automated biochemistry feed from partner lab analyzer."
+}

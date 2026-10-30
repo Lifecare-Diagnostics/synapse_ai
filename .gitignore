@@ -19,6 +19,8 @@ env/
 # Pipeline generated outputs
 outputs/*
 !outputs/.gitkeep
+*.db
+*.sqlite3
 
 # Local secrets, keys, and environment variables
 .env

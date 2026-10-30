@@ -17,6 +17,87 @@ class ReviewFlag(BaseModel):
     severity: Literal["info", "warning", "error"] = Field("warning", description="Severity of the issue")
 
 
+class MedicalHistoryEntry(BaseModel):
+    """
+    Structured medical history entry recorded for a patient.
+    Factual record of conditions, procedures, or diagnoses from source documents.
+    """
+    entry_id: str = Field(..., description="Unique identifier for this history entry")
+    condition_or_event: str = Field(..., description="Condition, diagnosis, or clinical event")
+    entry_date: Optional[str] = Field(None, description="ISO date (YYYY-MM-DD) when condition was recorded or diagnosed")
+    source: str = Field(..., description="Source document or reference where this history was recorded")
+    notes: Optional[str] = Field(None, description="Factual notes from the source without AI interpretation")
+
+
+class PatientDemographics(BaseModel):
+    """
+    Structured patient profile containing demographic details and medical history.
+    Does NOT infer missing data.
+    """
+    patient_id: str = Field(..., description="Primary patient identifier (e.g., SYN-1001)")
+    patient_name: str = Field(..., description="Full patient name as recorded")
+    date_of_birth: Optional[str] = Field(None, description="ISO date (YYYY-MM-DD) if recorded; None if unavailable")
+    age: Optional[int] = Field(None, description="Patient age at registration/most recent record")
+    sex: Optional[str] = Field(None, description="Patient sex as recorded (e.g., Male, Female)")
+    medical_history: List[MedicalHistoryEntry] = Field(default_factory=list, description="List of recorded medical history entries")
+
+
+class ReportParameter(BaseModel):
+    """
+    Individual laboratory parameter associated with a specific report.
+    Retains original verbatim name while providing standardized mapping.
+    """
+    parameter_id: str = Field(..., description="Unique identifier for this parameter instance")
+    report_id: str = Field(..., description="Foreign key linking to parent PatientReport")
+    patient_id: str = Field(..., description="Patient ID for direct longitudinal queries")
+    original_name: str = Field(..., description="Verbatim test name as extracted from source")
+    standardized_name: Optional[str] = Field(None, description="Canonical standardized test name if confidently mapped")
+    result_value: Optional[float] = Field(None, description="Numeric result value")
+    unit: Optional[str] = Field(None, description="Unit of measurement")
+    reference_range_text: Optional[str] = Field(None, description="Verbatim reference range from report")
+    reference_low: Optional[float] = Field(None, description="Lower bound of reference interval")
+    reference_high: Optional[float] = Field(None, description="Upper bound of reference interval")
+    clinical_flag: Literal["low", "normal", "high", "unknown"] = Field("unknown", description="Clinical interpretation flag")
+    abnormality_category: Literal[
+        "below_range", "within_range", "above_range", "reference_range_unavailable", "requires_review"
+    ] = Field("reference_range_unavailable", description="Categorization against source reference range")
+    extraction_status: Literal["ok", "needs_review", "unsupported"] = Field("ok", description="Status from extractor/reviewer")
+    source_text: str = Field(..., description="Exact raw line from source")
+    review_flags: List[ReviewFlag] = Field(default_factory=list, description="Per-parameter review flags")
+    report_date: Optional[str] = Field(None, description="Date of the parent report (YYYY-MM-DD)")
+
+
+class PatientReport(BaseModel):
+    """
+    Full metadata and record for a medical document stored in the Patient Digital Wallet.
+    """
+    report_id: str = Field(..., description="Unique report identifier")
+    patient_id: str = Field(..., description="Unique patient identifier")
+    report_date: Optional[str] = Field(None, description="Date report was performed/registered (YYYY-MM-DD)")
+    date_label: Optional[str] = Field(None, description="Verbatim date label from report (e.g., Registered On)")
+    report_category: str = Field("Other", description="Configurable category: CBC / Hematology, Biochemistry, etc.")
+    original_filename: str = Field(..., description="Original filename of source document")
+    file_format: str = Field(..., description="Format: txt, pdf, json, image, etc.")
+    upload_datetime: str = Field(..., description="ISO datetime of document ingestion")
+    extraction_status: Literal["success", "needs_review", "ocr_required", "failed"] = Field("success", description="Overall extraction outcome")
+    review_status: Literal["clean", "needs_review", "unsupported_parameters"] = Field("clean", description="Overall review status")
+    original_document_location: Optional[str] = Field(None, description="Path or URI to original document")
+    parameters: List[ReportParameter] = Field(default_factory=list, description="Extracted parameters linked to this report")
+    key_text_sections: Dict[str, str] = Field(default_factory=dict, description="Unstructured narrative sections")
+    document_level_flags: List[ReviewFlag] = Field(default_factory=list, description="Document-level review flags")
+    validation_errors: List[str] = Field(default_factory=list, description="Validation errors encountered")
+
+
+class Patient(BaseModel):
+    """
+    Complete patient entity combining demographics, medical history, and linked reports.
+    """
+    patient_id: str = Field(..., description="Unique patient identifier")
+    demographics: PatientDemographics = Field(..., description="Structured patient demographics and history")
+    reports: List[PatientReport] = Field(default_factory=list, description="All reports belonging to this patient")
+
+
+
 class LabResult(BaseModel):
     """
     Represents an individual laboratory test observation.
@@ -55,3 +136,10 @@ class ExtractedDocument(BaseModel):
 
 
 ReviewFlag.model_rebuild()
+MedicalHistoryEntry.model_rebuild()
+PatientDemographics.model_rebuild()
+ReportParameter.model_rebuild()
+PatientReport.model_rebuild()
+Patient.model_rebuild()
+LabResult.model_rebuild()
+ExtractedDocument.model_rebuild()

@@ -1,0 +1,19 @@
+SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA
+
+Patient Name: Rohan Example
+Patient ID: SYN-1001
+Age / Sex: 42 years / Male
+Registered On: 2026-06-15
+Report Type: Complete Blood Count (CBC)
+Specimen Type: EDTA
+
+Haemoglobin: 13.5 g/dL (Reference 13.0 - 17.0)
+RBC Count: 4.60 x10^6/cmm (Reference 4.5 - 5.5)
+WBC Count: 8.40 x10^3/cmm (Reference 4.0 - 10.0)
+Platelet Count: 2.50 x10^5/cmm (Reference 1.5 - 4.1)
+Neutrophils: 62 %
+Lymphocytes: 28 %
+Eosinophils: 04 %
+Monocytes: 06 %
+
+Comment: Follow-up complete blood count. Parameters within reference interval.
