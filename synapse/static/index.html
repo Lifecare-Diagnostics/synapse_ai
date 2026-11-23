@@ -43,6 +43,10 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Patient Directory
     </button>
+    <button class="nav-tab" data-target="tab-llm">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      LLM &amp; Costs
+    </button>
   </nav>
 
   <!-- Main Container -->
@@ -126,6 +130,119 @@
       </div>
     </div>
 
+    <!-- TAB 6: LLM Intelligence, Token Tracking & Cost Calculator -->
+    <div class="tab-pane" id="tab-llm">
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700;">LLM Intelligence &amp; Cost Control</h3>
+            <p style="font-size:0.8rem; color:var(--slate-500); margin:0;">
+              Active model configuration, token consumption tracking, and management cost estimation.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="loadLLMIntelligenceData()">Refresh Metrics</button>
+        </div>
+
+        <!-- Provider Status Card -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Provider</div>
+            <div id="llm-provider-name" style="font-size:1.25rem; font-weight:700; color:var(--primary-dark); margin-top:0.25rem;">—</div>
+            <div id="llm-provider-badge" class="badge badge-neutral" style="margin-top:0.35rem;">—</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Model</div>
+            <div id="llm-model-name" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">—</div>
+            <div style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">Offline fallback: Enabled</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Cumulative Cost</div>
+            <div id="llm-total-cost" style="font-size:1.25rem; font-weight:700; color:#16a34a; margin-top:0.25rem;">$0.000000</div>
+            <div id="llm-total-cost-inr" style="font-size:0.8rem; font-weight:600; color:var(--slate-600); margin-top:0.35rem;">₹0.00 INR</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Total Calls &amp; Tokens</div>
+            <div id="llm-calls-tokens" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">0 calls</div>
+            <div id="llm-tokens-detail" style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">0 input / 0 output</div>
+          </div>
+        </div>
+
+        <!-- Monthly Cost Projection Calculator for Life Care Management -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Life Care Monthly Cost Calculator (Management Model)</h4>
+        <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:1rem;">
+          Estimate commercial production operating costs at different clinical document processing volumes.
+        </p>
+
+        <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Monthly Document Volume:</label>
+              <select id="calc-volume-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="1000">1,000 documents/mo</option>
+                <option value="5000">5,000 documents/mo</option>
+                <option value="10000" selected>10,000 documents/mo</option>
+                <option value="25000">25,000 documents/mo</option>
+                <option value="50000">50,000 documents/mo</option>
+                <option value="100000">100,000 documents/mo</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Target Cloud Model:</label>
+              <select id="calc-model-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="gemini-3.5-flash-lite" selected>gemini-3.5-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-4-hydrogen">gemini-4-hydrogen ($0.15 in / $0.60 out)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Input Tokens / Doc:</label>
+              <input type="number" id="calc-input-tokens" value="5000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Output Tokens / Doc:</label>
+              <input type="number" id="calc-output-tokens" value="1000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid var(--slate-300); border-radius:var(--radius); padding:1rem; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (USD)</div>
+              <div id="calc-res-usd" style="font-size:1.5rem; font-weight:800; color:var(--primary-dark);">$9.00 / mo</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (INR @ ₹90/USD)</div>
+              <div id="calc-res-inr" style="font-size:1.5rem; font-weight:800; color:#16a34a;">₹810.00 / mo</div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--slate-500); max-width:280px;">
+              * Illustrative model based on standard cloud API rates. HybridExtractor routes structured labs locally (₹0 cost), keeping actual expenditure even lower.
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Calls Table -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Recent LLM Invocations &amp; Audit Log</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Provider</th>
+                <th>Model</th>
+                <th>Document</th>
+                <th>Tokens (In / Out)</th>
+                <th>Latency</th>
+                <th>Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="llm-recent-tbody">
+              <tr><td colspan="8" style="text-align:center; color:var(--slate-500); padding:1rem;">No tracked calls yet. Invocations appear here after processing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 3: Longitudinal Trend Analysis -->
     <div class="tab-pane" id="tab-trends">
       <div class="card">
@@ -167,6 +284,119 @@
       </div>
     </div>
 
+    <!-- TAB 6: LLM Intelligence, Token Tracking & Cost Calculator -->
+    <div class="tab-pane" id="tab-llm">
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700;">LLM Intelligence &amp; Cost Control</h3>
+            <p style="font-size:0.8rem; color:var(--slate-500); margin:0;">
+              Active model configuration, token consumption tracking, and management cost estimation.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="loadLLMIntelligenceData()">Refresh Metrics</button>
+        </div>
+
+        <!-- Provider Status Card -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Provider</div>
+            <div id="llm-provider-name" style="font-size:1.25rem; font-weight:700; color:var(--primary-dark); margin-top:0.25rem;">—</div>
+            <div id="llm-provider-badge" class="badge badge-neutral" style="margin-top:0.35rem;">—</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Model</div>
+            <div id="llm-model-name" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">—</div>
+            <div style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">Offline fallback: Enabled</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Cumulative Cost</div>
+            <div id="llm-total-cost" style="font-size:1.25rem; font-weight:700; color:#16a34a; margin-top:0.25rem;">$0.000000</div>
+            <div id="llm-total-cost-inr" style="font-size:0.8rem; font-weight:600; color:var(--slate-600); margin-top:0.35rem;">₹0.00 INR</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Total Calls &amp; Tokens</div>
+            <div id="llm-calls-tokens" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">0 calls</div>
+            <div id="llm-tokens-detail" style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">0 input / 0 output</div>
+          </div>
+        </div>
+
+        <!-- Monthly Cost Projection Calculator for Life Care Management -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Life Care Monthly Cost Calculator (Management Model)</h4>
+        <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:1rem;">
+          Estimate commercial production operating costs at different clinical document processing volumes.
+        </p>
+
+        <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Monthly Document Volume:</label>
+              <select id="calc-volume-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="1000">1,000 documents/mo</option>
+                <option value="5000">5,000 documents/mo</option>
+                <option value="10000" selected>10,000 documents/mo</option>
+                <option value="25000">25,000 documents/mo</option>
+                <option value="50000">50,000 documents/mo</option>
+                <option value="100000">100,000 documents/mo</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Target Cloud Model:</label>
+              <select id="calc-model-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="gemini-3.5-flash-lite" selected>gemini-3.5-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-4-hydrogen">gemini-4-hydrogen ($0.15 in / $0.60 out)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Input Tokens / Doc:</label>
+              <input type="number" id="calc-input-tokens" value="5000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Output Tokens / Doc:</label>
+              <input type="number" id="calc-output-tokens" value="1000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid var(--slate-300); border-radius:var(--radius); padding:1rem; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (USD)</div>
+              <div id="calc-res-usd" style="font-size:1.5rem; font-weight:800; color:var(--primary-dark);">$9.00 / mo</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (INR @ ₹90/USD)</div>
+              <div id="calc-res-inr" style="font-size:1.5rem; font-weight:800; color:#16a34a;">₹810.00 / mo</div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--slate-500); max-width:280px;">
+              * Illustrative model based on standard cloud API rates. HybridExtractor routes structured labs locally (₹0 cost), keeping actual expenditure even lower.
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Calls Table -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Recent LLM Invocations &amp; Audit Log</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Provider</th>
+                <th>Model</th>
+                <th>Document</th>
+                <th>Tokens (In / Out)</th>
+                <th>Latency</th>
+                <th>Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="llm-recent-tbody">
+              <tr><td colspan="8" style="text-align:center; color:var(--slate-500); padding:1rem;">No tracked calls yet. Invocations appear here after processing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 4: Patient Directory -->
     <div class="tab-pane" id="tab-patients">
       <div class="card">
@@ -187,6 +417,232 @@
               </tr>
             </thead>
             <tbody id="patients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: LLM Intelligence, Token Tracking & Cost Calculator -->
+    <div class="tab-pane" id="tab-llm">
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700;">LLM Intelligence &amp; Cost Control</h3>
+            <p style="font-size:0.8rem; color:var(--slate-500); margin:0;">
+              Active model configuration, token consumption tracking, and management cost estimation.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="loadLLMIntelligenceData()">Refresh Metrics</button>
+        </div>
+
+        <!-- Provider Status Card -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Provider</div>
+            <div id="llm-provider-name" style="font-size:1.25rem; font-weight:700; color:var(--primary-dark); margin-top:0.25rem;">—</div>
+            <div id="llm-provider-badge" class="badge badge-neutral" style="margin-top:0.35rem;">—</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Model</div>
+            <div id="llm-model-name" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">—</div>
+            <div style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">Offline fallback: Enabled</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Cumulative Cost</div>
+            <div id="llm-total-cost" style="font-size:1.25rem; font-weight:700; color:#16a34a; margin-top:0.25rem;">$0.000000</div>
+            <div id="llm-total-cost-inr" style="font-size:0.8rem; font-weight:600; color:var(--slate-600); margin-top:0.35rem;">₹0.00 INR</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Total Calls &amp; Tokens</div>
+            <div id="llm-calls-tokens" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">0 calls</div>
+            <div id="llm-tokens-detail" style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">0 input / 0 output</div>
+          </div>
+        </div>
+
+        <!-- Monthly Cost Projection Calculator for Life Care Management -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Life Care Monthly Cost Calculator (Management Model)</h4>
+        <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:1rem;">
+          Estimate commercial production operating costs at different clinical document processing volumes.
+        </p>
+
+        <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Monthly Document Volume:</label>
+              <select id="calc-volume-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="1000">1,000 documents/mo</option>
+                <option value="5000">5,000 documents/mo</option>
+                <option value="10000" selected>10,000 documents/mo</option>
+                <option value="25000">25,000 documents/mo</option>
+                <option value="50000">50,000 documents/mo</option>
+                <option value="100000">100,000 documents/mo</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Target Cloud Model:</label>
+              <select id="calc-model-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="gemini-3.5-flash-lite" selected>gemini-3.5-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-4-hydrogen">gemini-4-hydrogen ($0.15 in / $0.60 out)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Input Tokens / Doc:</label>
+              <input type="number" id="calc-input-tokens" value="5000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Output Tokens / Doc:</label>
+              <input type="number" id="calc-output-tokens" value="1000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid var(--slate-300); border-radius:var(--radius); padding:1rem; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (USD)</div>
+              <div id="calc-res-usd" style="font-size:1.5rem; font-weight:800; color:var(--primary-dark);">$9.00 / mo</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (INR @ ₹90/USD)</div>
+              <div id="calc-res-inr" style="font-size:1.5rem; font-weight:800; color:#16a34a;">₹810.00 / mo</div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--slate-500); max-width:280px;">
+              * Illustrative model based on standard cloud API rates. HybridExtractor routes structured labs locally (₹0 cost), keeping actual expenditure even lower.
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Calls Table -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Recent LLM Invocations &amp; Audit Log</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Provider</th>
+                <th>Model</th>
+                <th>Document</th>
+                <th>Tokens (In / Out)</th>
+                <th>Latency</th>
+                <th>Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="llm-recent-tbody">
+              <tr><td colspan="8" style="text-align:center; color:var(--slate-500); padding:1rem;">No tracked calls yet. Invocations appear here after processing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: LLM Intelligence, Token Tracking & Cost Calculator -->
+    <div class="tab-pane" id="tab-llm">
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700;">LLM Intelligence &amp; Cost Control</h3>
+            <p style="font-size:0.8rem; color:var(--slate-500); margin:0;">
+              Active model configuration, token consumption tracking, and management cost estimation.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="loadLLMIntelligenceData()">Refresh Metrics</button>
+        </div>
+
+        <!-- Provider Status Card -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Provider</div>
+            <div id="llm-provider-name" style="font-size:1.25rem; font-weight:700; color:var(--primary-dark); margin-top:0.25rem;">—</div>
+            <div id="llm-provider-badge" class="badge badge-neutral" style="margin-top:0.35rem;">—</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Model</div>
+            <div id="llm-model-name" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">—</div>
+            <div style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">Offline fallback: Enabled</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Cumulative Cost</div>
+            <div id="llm-total-cost" style="font-size:1.25rem; font-weight:700; color:#16a34a; margin-top:0.25rem;">$0.000000</div>
+            <div id="llm-total-cost-inr" style="font-size:0.8rem; font-weight:600; color:var(--slate-600); margin-top:0.35rem;">₹0.00 INR</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Total Calls &amp; Tokens</div>
+            <div id="llm-calls-tokens" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">0 calls</div>
+            <div id="llm-tokens-detail" style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">0 input / 0 output</div>
+          </div>
+        </div>
+
+        <!-- Monthly Cost Projection Calculator for Life Care Management -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Life Care Monthly Cost Calculator (Management Model)</h4>
+        <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:1rem;">
+          Estimate commercial production operating costs at different clinical document processing volumes.
+        </p>
+
+        <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Monthly Document Volume:</label>
+              <select id="calc-volume-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="1000">1,000 documents/mo</option>
+                <option value="5000">5,000 documents/mo</option>
+                <option value="10000" selected>10,000 documents/mo</option>
+                <option value="25000">25,000 documents/mo</option>
+                <option value="50000">50,000 documents/mo</option>
+                <option value="100000">100,000 documents/mo</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Target Cloud Model:</label>
+              <select id="calc-model-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="gemini-3.5-flash-lite" selected>gemini-3.5-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-4-hydrogen">gemini-4-hydrogen ($0.15 in / $0.60 out)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Input Tokens / Doc:</label>
+              <input type="number" id="calc-input-tokens" value="5000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Output Tokens / Doc:</label>
+              <input type="number" id="calc-output-tokens" value="1000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid var(--slate-300); border-radius:var(--radius); padding:1rem; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (USD)</div>
+              <div id="calc-res-usd" style="font-size:1.5rem; font-weight:800; color:var(--primary-dark);">$9.00 / mo</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (INR @ ₹90/USD)</div>
+              <div id="calc-res-inr" style="font-size:1.5rem; font-weight:800; color:#16a34a;">₹810.00 / mo</div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--slate-500); max-width:280px;">
+              * Illustrative model based on standard cloud API rates. HybridExtractor routes structured labs locally (₹0 cost), keeping actual expenditure even lower.
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Calls Table -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Recent LLM Invocations &amp; Audit Log</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Provider</th>
+                <th>Model</th>
+                <th>Document</th>
+                <th>Tokens (In / Out)</th>
+                <th>Latency</th>
+                <th>Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="llm-recent-tbody">
+              <tr><td colspan="8" style="text-align:center; color:var(--slate-500); padding:1rem;">No tracked calls yet. Invocations appear here after processing.</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -259,6 +715,119 @@
       <!-- Review Flags & Validation Errors -->
       <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:0.5rem;">Extraction Review Flags & Validation Audit</h4>
       <div id="modal-flags" style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:0.85rem;"></div>
+    </div>
+
+    <!-- TAB 6: LLM Intelligence, Token Tracking & Cost Calculator -->
+    <div class="tab-pane" id="tab-llm">
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700;">LLM Intelligence &amp; Cost Control</h3>
+            <p style="font-size:0.8rem; color:var(--slate-500); margin:0;">
+              Active model configuration, token consumption tracking, and management cost estimation.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="loadLLMIntelligenceData()">Refresh Metrics</button>
+        </div>
+
+        <!-- Provider Status Card -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Provider</div>
+            <div id="llm-provider-name" style="font-size:1.25rem; font-weight:700; color:var(--primary-dark); margin-top:0.25rem;">—</div>
+            <div id="llm-provider-badge" class="badge badge-neutral" style="margin-top:0.35rem;">—</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Active Model</div>
+            <div id="llm-model-name" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">—</div>
+            <div style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">Offline fallback: Enabled</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Cumulative Cost</div>
+            <div id="llm-total-cost" style="font-size:1.25rem; font-weight:700; color:#16a34a; margin-top:0.25rem;">$0.000000</div>
+            <div id="llm-total-cost-inr" style="font-size:0.8rem; font-weight:600; color:var(--slate-600); margin-top:0.35rem;">₹0.00 INR</div>
+          </div>
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Total Calls &amp; Tokens</div>
+            <div id="llm-calls-tokens" style="font-size:1.1rem; font-weight:700; color:var(--slate-800); margin-top:0.25rem;">0 calls</div>
+            <div id="llm-tokens-detail" style="font-size:0.75rem; color:var(--slate-500); margin-top:0.35rem;">0 input / 0 output</div>
+          </div>
+        </div>
+
+        <!-- Monthly Cost Projection Calculator for Life Care Management -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Life Care Monthly Cost Calculator (Management Model)</h4>
+        <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:1rem;">
+          Estimate commercial production operating costs at different clinical document processing volumes.
+        </p>
+
+        <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Monthly Document Volume:</label>
+              <select id="calc-volume-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="1000">1,000 documents/mo</option>
+                <option value="5000">5,000 documents/mo</option>
+                <option value="10000" selected>10,000 documents/mo</option>
+                <option value="25000">25,000 documents/mo</option>
+                <option value="50000">50,000 documents/mo</option>
+                <option value="100000">100,000 documents/mo</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Target Cloud Model:</label>
+              <select id="calc-model-select" onchange="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+                <option value="gemini-3.5-flash-lite" selected>gemini-3.5-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite ($0.10 in / $0.40 out)</option>
+                <option value="gemini-4-hydrogen">gemini-4-hydrogen ($0.15 in / $0.60 out)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Input Tokens / Doc:</label>
+              <input type="number" id="calc-input-tokens" value="5000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; font-weight:600; margin-bottom:0.25rem;">Avg Output Tokens / Doc:</label>
+              <input type="number" id="calc-output-tokens" value="1000" oninput="runCostProjectionCalc()" style="width:100%; padding:0.4rem; font-size:0.85rem; border:1px solid var(--slate-300); border-radius:4px;">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid var(--slate-300); border-radius:var(--radius); padding:1rem; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (USD)</div>
+              <div id="calc-res-usd" style="font-size:1.5rem; font-weight:800; color:var(--primary-dark);">$9.00 / mo</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; font-weight:600; color:var(--slate-500); text-transform:uppercase;">Projected Monthly Cost (INR @ ₹90/USD)</div>
+              <div id="calc-res-inr" style="font-size:1.5rem; font-weight:800; color:#16a34a;">₹810.00 / mo</div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--slate-500); max-width:280px;">
+              * Illustrative model based on standard cloud API rates. HybridExtractor routes structured labs locally (₹0 cost), keeping actual expenditure even lower.
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Calls Table -->
+        <h4 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem;">Recent LLM Invocations &amp; Audit Log</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Provider</th>
+                <th>Model</th>
+                <th>Document</th>
+                <th>Tokens (In / Out)</th>
+                <th>Latency</th>
+                <th>Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="llm-recent-tbody">
+              <tr><td colspan="8" style="text-align:center; color:var(--slate-500); padding:1rem;">No tracked calls yet. Invocations appear here after processing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 

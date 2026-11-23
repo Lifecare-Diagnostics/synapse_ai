@@ -3,7 +3,7 @@ synapse_poc/synapse/schema.py
 Pydantic data models for structured diagnostic document extraction.
 """
 
-from typing import Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -67,6 +67,29 @@ class ReportParameter(BaseModel):
     report_date: Optional[str] = Field(None, description="Date of the parent report (YYYY-MM-DD)")
 
 
+class FieldCorrection(BaseModel):
+    """Record of a human-in-the-loop correction to an extracted parameter or field."""
+    field_name: str = Field(..., description="Field or parameter name corrected")
+    original_value: Any = Field(..., description="Original extracted value")
+    corrected_value: Any = Field(..., description="Human corrected value")
+    reviewer: str = Field(..., description="Reviewer identifier/name")
+    timestamp: str = Field(..., description="ISO timestamp of correction")
+    reason: Optional[str] = Field(None, description="Clinical reason or correction note")
+
+
+class ReviewAuditEntry(BaseModel):
+    """Audit entry documenting an action taken in the Review Queue."""
+    entry_id: str = Field(..., description="Unique audit entry identifier")
+    report_id: str = Field(..., description="Target report identifier")
+    action: Literal["approve", "reject", "needs_review", "correct_field"] = Field(..., description="Action taken")
+    reviewer: str = Field(..., description="Reviewer name/ID")
+    timestamp: str = Field(..., description="ISO timestamp")
+    previous_status: str = Field(..., description="Review status before action")
+    new_status: str = Field(..., description="Review status after action")
+    comments: Optional[str] = Field(None, description="Reviewer comments or notes")
+    corrections: List[FieldCorrection] = Field(default_factory=list, description="Field corrections if any")
+
+
 class PatientReport(BaseModel):
     """
     Full metadata and record for a medical document stored in the Patient Digital Wallet.
@@ -80,13 +103,14 @@ class PatientReport(BaseModel):
     file_format: str = Field(..., description="Format: txt, pdf, json, image, etc.")
     upload_datetime: str = Field(..., description="ISO datetime of document ingestion")
     extraction_status: Literal["success", "needs_review", "ocr_required", "failed"] = Field("success", description="Overall extraction outcome")
-    review_status: Literal["clean", "needs_review", "unsupported_parameters"] = Field("clean", description="Overall review status")
+    review_status: Literal["clean", "needs_review", "unsupported_parameters", "approved", "rejected", "corrected"] = Field("clean", description="Overall review status")
     original_document_location: Optional[str] = Field(None, description="Path or URI to original document")
     content_hash: Optional[str] = Field(None, description="SHA-256 hash of raw content for duplicate detection")
     parameters: List[ReportParameter] = Field(default_factory=list, description="Extracted parameters linked to this report")
     key_text_sections: Dict[str, str] = Field(default_factory=dict, description="Unstructured narrative sections")
     document_level_flags: List[ReviewFlag] = Field(default_factory=list, description="Document-level review flags")
     validation_errors: List[str] = Field(default_factory=list, description="Validation errors encountered")
+    review_history: List[ReviewAuditEntry] = Field(default_factory=list, description="Audit history of review actions and corrections")
 
 
 class Patient(BaseModel):
@@ -137,6 +161,8 @@ class ExtractedDocument(BaseModel):
 
 
 ReviewFlag.model_rebuild()
+FieldCorrection.model_rebuild()
+ReviewAuditEntry.model_rebuild()
 MedicalHistoryEntry.model_rebuild()
 PatientDemographics.model_rebuild()
 ReportParameter.model_rebuild()

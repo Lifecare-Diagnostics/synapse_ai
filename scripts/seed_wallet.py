@@ -12,7 +12,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 from synapse.schema import MedicalHistoryEntry, PatientDemographics
-from synapse.reader import read_text_file
+from synapse.reader import read_pdf_text, read_text_file
 from synapse.extractor import RuleBasedExtractor
 from synapse.validator import DocumentValidator
 from synapse.reviewer import ExtractionReviewer
@@ -115,10 +115,20 @@ def seed_database(db_path: str = os.path.join(BASE_DIR, "data", "synapse_wallet.
             if os.path.exists(fp):
                 file_list.append((fp, "txt"))
 
+    # PDF sample reports
+    pdf_samples_dir = os.path.join(BASE_DIR, "data", "pdf_samples")
+    if os.path.exists(pdf_samples_dir):
+        for f in sorted(os.listdir(pdf_samples_dir)):
+            if f.endswith(".pdf"):
+                file_list.append((os.path.join(pdf_samples_dir, f), "pdf"))
+
     print("\n--> Ingesting document files into digital wallet...")
     for fpath, ffmt in file_list:
         fname = os.path.basename(fpath)
-        content = read_text_file(fpath)
+        if ffmt == "pdf":
+            content = read_pdf_text(fpath)
+        else:
+            content = read_text_file(fpath)
         doc = extractor.extract(content, fname)
         doc = validator.validate(doc)
         doc = reviewer.review(doc)

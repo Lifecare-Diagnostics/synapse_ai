@@ -12,7 +12,59 @@ let state = {
   searchQuery: "",
   activeCalendarYear: 2026,
   activeCalendarMonth: 3, // April (0-indexed: 3)
+  currentReport: null,
+  selectedCorrectionParamId: null,
+  reviewQueue: [],
+  reviewFilterStatus: "",
+  reviewFilterSearch: "",
+  currentUser: null,
+  authToken: null,
 };
+
+const SYNTHETIC_CREDENTIALS = {
+  "dr.sunita": "Doctor@123",
+  "auditor.meera": "Audit@123",
+  "tech.anil": "Tech@123",
+  "admin.synapse": "Admin@123",
+};
+
+async function authenticateActiveUser(username) {
+  const password = SYNTHETIC_CREDENTIALS[username] || "Doctor@123";
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      console.error("Authentication failed for", username);
+      return;
+    }
+    const data = await res.json();
+    state.authToken = data.access_token;
+    state.currentUser = data.user;
+
+    const badge = document.getElementById("auth-role-badge");
+    if (badge) {
+      const roleBadges = {
+        Pathologist: "badge-success",
+        Auditor: "badge-info",
+        Technician: "badge-warning",
+        Administrator: "badge-neutral",
+      };
+      badge.className = `badge ${roleBadges[data.user.role] || 'badge-neutral'}`;
+      badge.innerText = data.user.role;
+    }
+
+    // Auto-update reviewer name input in modal if present
+    const revInput = document.getElementById("review-action-reviewer");
+    if (revInput) revInput.value = data.user.full_name;
+    const corrRevInput = document.getElementById("corr-reviewer-input");
+    if (corrRevInput) corrRevInput.value = data.user.full_name;
+  } catch (err) {
+    console.error("Auth error:", err);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Initialization & Navigation
@@ -22,6 +74,20 @@ document.addEventListener("DOMContentLoaded", () => {
   setupTabs();
   setupFilters();
   setupUploadModal();
+
+  // Initialize Active Authenticated User (Phase 7A/7B RBAC)
+  const userSelect = document.getElementById("auth-user-select");
+  if (userSelect) {
+    authenticateActiveUser(userSelect.value);
+    userSelect.addEventListener("change", (e) => {
+      authenticateActiveUser(e.target.value).then(() => {
+        showToast(`Switched active user to ${state.currentUser?.full_name || e.target.value}`);
+      });
+    });
+  } else {
+    authenticateActiveUser("dr.sunita");
+  }
+
   loadPatients().then(() => {
     selectPatient(state.currentPatientId);
   });
@@ -44,6 +110,8 @@ function setupTabs() {
         renderCalendar();
       } else if (target === "tab-trends") {
         loadTrendParameters();
+      } else if (target === "tab-review") {
+        loadReviewQueue();
       }
     });
   });
@@ -212,9 +280,12 @@ function renderReportsList(reports) {
           <strong>Uploaded:</strong> ${r.upload_datetime.substring(0, 10)}
         </div>
       </div>
-      <div>
-        <button class="btn btn-sm btn-outline" onclick="openReportModal('${r.report_id}')">
-          View Details & Abnormality
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <a href="${API_BASE}/reports/${r.report_id}/document" target="_blank" class="btn btn-sm btn-outline" style="text-decoration:none;">
+          📄 View ${(r.file_format || 'txt').toUpperCase()}
+        </a>
+        <button class="btn btn-sm btn-primary" onclick="openReportModal('${r.report_id}')">
+          Details & Abnormality
         </button>
       </div>
     `;
@@ -264,6 +335,26 @@ function setupFilters() {
   document.getElementById("patient-search-input").addEventListener("input", (e) => {
     loadPatients(e.target.value.trim());
   });
+
+  // Review Queue Filter Pills
+  const revPills = document.querySelectorAll("#review-status-pills .cat-pill");
+  revPills.forEach((p) => {
+    p.addEventListener("click", () => {
+      revPills.forEach((x) => x.classList.remove("active"));
+      p.classList.add("active");
+      state.reviewFilterStatus = p.dataset.reviewStatus || "";
+      loadReviewQueue();
+    });
+  });
+
+  // Review Queue Search Input
+  const revSearch = document.getElementById("review-filter-search");
+  if (revSearch) {
+    revSearch.addEventListener("input", (e) => {
+      state.reviewFilterSearch = e.target.value.trim().toLowerCase();
+      filterAndRenderReviewQueue();
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -272,26 +363,75 @@ function setupFilters() {
 
 async function openReportModal(reportId) {
   try {
-    const [repRes, abRes] = await Promise.all([
+    const [repRes, abRes, contentRes] = await Promise.all([
       fetch(`${API_BASE}/reports/${reportId}`),
       fetch(`${API_BASE}/reports/${reportId}/abnormal-summary`),
+      fetch(`${API_BASE}/reports/${reportId}/content`),
     ]);
 
+    if (!repRes.ok) {
+      throw new Error(`Report not found (${repRes.status})`);
+    }
+
     const report = await repRes.json();
-    const abSummary = await abRes.json();
+    const abSummary = abRes.ok ? await abRes.json() : { below_range: [], above_range: [], within_range: [], requires_review: [], reference_range_unavailable: [] };
+    const docContent = contentRes.ok ? await contentRes.json() : null;
 
     document.getElementById("modal-report-id").innerText = report.report_id;
     document.getElementById("modal-patient-id").innerText = report.patient_id;
     document.getElementById("modal-report-date").innerText = report.report_date || "Unknown";
     document.getElementById("modal-report-category").innerText = report.report_category;
-    document.getElementById("modal-report-format").innerText = report.file_format.toUpperCase();
+    document.getElementById("modal-report-format").innerText = (report.file_format || "TXT").toUpperCase();
     document.getElementById("modal-report-status").innerText = report.extraction_status;
 
+    // Document Source viewer
+    const docLink = document.getElementById("modal-doc-link");
+    const docFilename = document.getElementById("modal-doc-filename");
+    const textWrapper = document.getElementById("modal-doc-text-wrapper");
+    const textPre = document.getElementById("modal-doc-text");
+    const pdfWrapper = document.getElementById("modal-doc-pdf-wrapper");
+    const pdfIframe = document.getElementById("modal-doc-pdf-iframe");
+    const imgWrapper = document.getElementById("modal-doc-img-wrapper");
+    const imgElement = document.getElementById("modal-doc-img");
+    const errorBox = document.getElementById("modal-doc-error");
+
+    const docUrl = `${API_BASE}/reports/${reportId}/document`;
+    docLink.href = docUrl;
+    docFilename.innerText = report.original_filename || "Document";
+
+    // Reset visibility
+    textWrapper.style.display = "none";
+    pdfWrapper.style.display = "none";
+    if (imgWrapper) imgWrapper.style.display = "none";
+    errorBox.style.display = "none";
+
+    if (docContent && docContent.error) {
+      errorBox.innerText = docContent.error;
+      errorBox.style.display = "block";
+    } else if (docContent && docContent.is_text) {
+      textPre.innerText = docContent.content || "Empty document content.";
+      textWrapper.style.display = "block";
+    } else if (docContent && docContent.is_image) {
+      if (imgElement && imgWrapper) {
+        imgElement.src = docUrl;
+        imgWrapper.style.display = "block";
+      }
+    } else if (report.file_format === "pdf" || (docContent && docContent.file_format === "pdf")) {
+      pdfIframe.src = docUrl;
+      pdfWrapper.style.display = "block";
+    } else if (docContent && docContent.content) {
+      textPre.innerText = docContent.content;
+      textWrapper.style.display = "block";
+    } else {
+      textPre.innerText = "No preview available.";
+      textWrapper.style.display = "block";
+    }
+
     // Render 4 abnormal summary boxes
-    renderAbnormalBox("box-below", abSummary.below_range, "var(--danger)");
-    renderAbnormalBox("box-above", abSummary.above_range, "#ea580c");
-    renderAbnormalBox("box-normal", abSummary.within_range, "var(--success)");
-    renderAbnormalBox("box-review", [...abSummary.requires_review, ...abSummary.reference_range_unavailable], "var(--warning)");
+    renderAbnormalBox("box-below", abSummary.below_range || [], "var(--danger)");
+    renderAbnormalBox("box-above", abSummary.above_range || [], "#ea580c");
+    renderAbnormalBox("box-normal", abSummary.within_range || [], "var(--success)");
+    renderAbnormalBox("box-review", [...(abSummary.requires_review || []), ...(abSummary.reference_range_unavailable || [])], "var(--warning)");
 
     // Raw Narrative Sections
     const secBox = document.getElementById("modal-sections");
@@ -321,10 +461,344 @@ async function openReportModal(reportId) {
       });
     }
 
+    // Set current active report in state
+    state.currentReport = report;
+
+    // Review Status Badge & FHIR Export Safeguard UI
+    const revBadge = document.getElementById("modal-review-badge");
+    const fhirBtn = document.getElementById("modal-btn-export-fhir");
+    const st = report.review_status || "needs_review";
+    const badgeMap = {
+      clean: "badge-success",
+      approved: "badge-success",
+      needs_review: "badge-warning",
+      unsupported_parameters: "badge-warning",
+      corrected: "badge-info",
+      rejected: "badge-danger",
+    };
+    if (revBadge) {
+      revBadge.className = `badge ${badgeMap[st] || 'badge-neutral'}`;
+      revBadge.innerText = st.replace(/_/g, " ").toUpperCase();
+    }
+    if (fhirBtn) {
+      if (st === "rejected") {
+        fhirBtn.className = "btn btn-sm btn-outline";
+        fhirBtn.style.opacity = "0.5";
+        fhirBtn.title = "Export blocked: Report has been rejected.";
+        fhirBtn.innerText = "❌ Export FHIR (Blocked)";
+      } else if (st === "approved" || st === "clean") {
+        fhirBtn.className = "btn btn-sm btn-primary";
+        fhirBtn.style.opacity = "1";
+        fhirBtn.title = "Approved for FHIR R4 export.";
+        fhirBtn.innerText = "📤 Export FHIR R4 (Ready)";
+      } else {
+        fhirBtn.className = "btn btn-sm btn-outline";
+        fhirBtn.style.opacity = "0.9";
+        fhirBtn.title = "Clinical approval recommended before FHIR export.";
+        fhirBtn.innerText = "📤 Export FHIR R4";
+      }
+    }
+
+    // Render parameters table for field-level correction
+    renderModalParameters(report.parameters || []);
+
+    // Reset inline correction form
+    closeCorrectionForm();
+
+    // Load review and correction audit trail
+    loadAndRenderReportReviewHistory(reportId);
+
     document.getElementById("report-modal").classList.add("active");
   } catch (err) {
     showToast(`Error opening report: ${err.message}`, true);
   }
+}
+
+function renderModalParameters(params) {
+  const tbody = document.getElementById("modal-params-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  if (!params || params.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1rem; color:var(--slate-400);">No parameters extracted.</td></tr>`;
+    return;
+  }
+  const flagBadges = {
+    low: '<span class="badge badge-danger">Low</span>',
+    high: '<span class="badge badge-warning">High</span>',
+    normal: '<span class="badge badge-success">Normal</span>',
+  };
+  params.forEach((p) => {
+    const tr = document.createElement("tr");
+    const flagHtml = flagBadges[p.clinical_flag] || '<span class="badge badge-neutral">—</span>';
+    tr.innerHTML = `
+      <td>
+        <strong>${p.original_name}</strong>
+        ${p.standardized_name && p.standardized_name !== p.original_name ? `<div style="font-size:0.7rem; color:var(--slate-500);">Std: ${p.standardized_name}</div>` : ""}
+      </td>
+      <td style="font-weight:600;">${p.result_value !== null ? p.result_value : "—"}</td>
+      <td>${p.unit || "—"}</td>
+      <td style="font-size:0.75rem; color:var(--slate-600);">${p.reference_range_text || "—"}</td>
+      <td>${flagHtml}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="openCorrectionForm('${p.parameter_id}')">Correct</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openCorrectionForm(paramId) {
+  if (!state.currentReport) return;
+  const param = (state.currentReport.parameters || []).find((p) => p.parameter_id === paramId);
+  if (!param) return;
+
+  state.selectedCorrectionParamId = paramId;
+  const nameEl = document.getElementById("corr-param-name");
+  const idEl = document.getElementById("corr-param-id");
+  const valInput = document.getElementById("corr-val-input");
+  const nameInput = document.getElementById("corr-name-input");
+  const unitInput = document.getElementById("corr-unit-input");
+  const reasonInput = document.getElementById("corr-reason-input");
+  const card = document.getElementById("param-correction-card");
+
+  if (nameEl) nameEl.innerText = param.original_name;
+  if (idEl) idEl.innerText = param.parameter_id;
+  if (valInput) valInput.value = param.result_value !== null ? param.result_value : "";
+  if (nameInput) nameInput.value = param.original_name || "";
+  if (unitInput) unitInput.value = param.unit || "";
+  if (reasonInput) reasonInput.value = "";
+  if (card) {
+    card.style.display = "block";
+    card.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+function closeCorrectionForm() {
+  state.selectedCorrectionParamId = null;
+  const card = document.getElementById("param-correction-card");
+  if (card) card.style.display = "none";
+}
+
+async function submitParameterCorrection() {
+  if (!state.currentReport || !state.selectedCorrectionParamId) return;
+
+  const reportId = state.currentReport.report_id;
+  const paramId = state.selectedCorrectionParamId;
+  const valStr = document.getElementById("corr-val-input").value.trim();
+  const nameStr = document.getElementById("corr-name-input").value.trim();
+  const unitStr = document.getElementById("corr-unit-input").value.trim();
+  const reviewerStr = document.getElementById("corr-reviewer-input").value.trim() || "Clinical Auditor";
+  const reasonStr = document.getElementById("corr-reason-input").value.trim();
+
+  if (!reasonStr) {
+    showToast("Please enter a reason for the parameter correction.", true);
+    return;
+  }
+
+  const payload = {
+    corrected_value: valStr !== "" ? parseFloat(valStr) : null,
+    corrected_name: nameStr || null,
+    corrected_unit: unitStr || null,
+    reviewer: reviewerStr,
+    reason: reasonStr,
+  };
+
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (state.authToken) headers["Authorization"] = `Bearer ${state.authToken}`;
+    const res = await fetch(`${API_BASE}/review/reports/${reportId}/parameters/${paramId}/correct`, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(`Correction failed: ${data.detail || 'Error'}`, true);
+      return;
+    }
+    showToast(`✓ Parameter '${data.data?.original_name || 'value'}' corrected and logged!`);
+    closeCorrectionForm();
+    await openReportModal(reportId);
+    if (document.getElementById("tab-review").classList.contains("active")) {
+      loadReviewQueue();
+    }
+  } catch (err) {
+    showToast(`Network error: ${err.message}`, true);
+  }
+}
+
+async function submitReviewAction(action) {
+  if (!state.currentReport) return;
+  const reportId = state.currentReport.report_id;
+  const reviewerInput = document.getElementById("review-action-reviewer");
+  const commentInput = document.getElementById("review-action-comment");
+  const reviewer = (reviewerInput && reviewerInput.value.trim()) || "Clinical Reviewer";
+  const comments = (commentInput && commentInput.value.trim()) || null;
+
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (state.authToken) headers["Authorization"] = `Bearer ${state.authToken}`;
+    const res = await fetch(`${API_BASE}/review/reports/${reportId}/action`, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({ action, reviewer, comments }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(`Review action failed: ${data.detail || 'Error'}`, true);
+      return;
+    }
+    showToast(`✓ Report ${reportId} review updated to '${data.new_status}'!`);
+    await openReportModal(reportId);
+    if (document.getElementById("tab-review").classList.contains("active")) {
+      loadReviewQueue();
+    }
+  } catch (err) {
+    showToast(`Network error: ${err.message}`, true);
+  }
+}
+
+async function loadAndRenderReportReviewHistory(reportId) {
+  const box = document.getElementById("modal-review-history");
+  if (!box) return;
+  box.innerHTML = `<span style="font-size:0.75rem; color:var(--slate-500);">Loading audit history...</span>`;
+  try {
+    const res = await fetch(`${API_BASE}/review/reports/${reportId}/history`);
+    if (!res.ok) {
+      box.innerHTML = `<span style="font-size:0.75rem; color:var(--slate-400);">No history recorded.</span>`;
+      return;
+    }
+    const data = await res.json();
+    const history = data.history || [];
+    if (history.length === 0) {
+      box.innerHTML = `<span style="font-size:0.75rem; color:var(--slate-500);">No review actions or manual corrections recorded yet.</span>`;
+      return;
+    }
+    box.innerHTML = "";
+    history.forEach((h) => {
+      const item = document.createElement("div");
+      item.style.padding = "0.5rem 0";
+      item.style.borderBottom = "1px solid var(--slate-200)";
+      item.style.fontSize = "0.785rem";
+
+      let corrsHtml = "";
+      if (h.corrections && h.corrections.length > 0) {
+        corrsHtml = `<div style="margin-top:0.25rem; padding-left:0.5rem; border-left:2px solid var(--primary); font-size:0.75rem;">` +
+          h.corrections.map((c) => `<div><strong>${c.field_name}:</strong> '${c.original_value !== null ? c.original_value : "null"}' &rarr; '${c.corrected_value !== null ? c.corrected_value : "null"}' (Reason: ${c.reason})</div>`).join("") +
+          `</div>`;
+      }
+
+      item.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem;">
+          <div>
+            <strong style="text-transform:uppercase; color:var(--slate-800);">${h.action}</strong>
+            <span style="color:var(--slate-500); font-size:0.75rem;">by ${h.reviewer}</span>
+          </div>
+          <span style="font-size:0.7rem; color:var(--slate-400);">${new Date(h.timestamp).toLocaleString()}</span>
+        </div>
+        ${h.comments ? `<div style="color:var(--slate-700); margin-bottom:0.2rem;">Note: ${h.comments}</div>` : ""}
+        ${h.previous_status ? `<div style="font-size:0.7rem; color:var(--slate-500);">Status: ${h.previous_status} &rarr; <strong>${h.new_status}</strong></div>` : ""}
+        ${corrsHtml}
+      `;
+      box.appendChild(item);
+    });
+  } catch (err) {
+    box.innerHTML = `<span style="font-size:0.75rem; color:var(--danger);">Error loading audit history.</span>`;
+  }
+}
+
+async function exportCurrentReportFhir() {
+  if (!state.currentReport) return;
+  const reportId = state.currentReport.report_id;
+  try {
+    const headers = {};
+    if (state.authToken) headers["Authorization"] = `Bearer ${state.authToken}`;
+    const res = await fetch(`${API_BASE}/interop/fhir/reports/${reportId}?enforce_approval=true`, {
+      headers: headers,
+    });
+    const data = await res.json();
+    if (res.status === 403) {
+      showToast(`⛔ ${data.detail}`, true);
+      return;
+    }
+    if (!res.ok) {
+      showToast(`Export error: ${data.detail || 'Failed to export FHIR'}`, true);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `fhir_report_${reportId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`✓ HL7 FHIR R4 Bundle downloaded (${data.total || 0} resources)!`);
+  } catch (err) {
+    showToast(`Network error exporting FHIR: ${err.message}`, true);
+  }
+}
+
+async function loadReviewQueue() {
+  try {
+    const url = state.reviewFilterStatus
+      ? `${API_BASE}/review/queue?status=${encodeURIComponent(state.reviewFilterStatus)}`
+      : `${API_BASE}/review/queue`;
+    const res = await fetch(url);
+    const data = await res.json();
+    state.reviewQueue = data.queue || [];
+    filterAndRenderReviewQueue();
+  } catch (err) {
+    console.error("Failed to load review queue:", err);
+  }
+}
+
+function filterAndRenderReviewQueue() {
+  let list = state.reviewQueue;
+  if (state.reviewFilterSearch) {
+    const q = state.reviewFilterSearch;
+    list = list.filter((r) =>
+      r.report_id.toLowerCase().includes(q) ||
+      (r.patient_name && r.patient_name.toLowerCase().includes(q)) ||
+      (r.report_category && r.report_category.toLowerCase().includes(q))
+    );
+  }
+  renderReviewQueue(list);
+}
+
+function renderReviewQueue(items) {
+  const tbody = document.getElementById("review-queue-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  if (!items || items.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--slate-500);">No reports matching review criteria.</td></tr>`;
+    return;
+  }
+  const badgeMap = {
+    clean: "badge-success",
+    approved: "badge-success",
+    needs_review: "badge-warning",
+    unsupported_parameters: "badge-warning",
+    corrected: "badge-info",
+    rejected: "badge-danger",
+  };
+  items.forEach((r) => {
+    const tr = document.createElement("tr");
+    const stBadge = `<span class="badge ${badgeMap[r.review_status] || 'badge-neutral'}">${r.review_status.replace(/_/g, " ")}</span>`;
+    tr.innerHTML = `
+      <td><strong>${r.report_id}</strong></td>
+      <td>${r.patient_name} <span style="font-size:0.75rem; color:var(--slate-500);">(${r.patient_id})</span></td>
+      <td>${r.report_date || "—"}</td>
+      <td>${r.report_category}</td>
+      <td>${r.extraction_status}</td>
+      <td>${stBadge}</td>
+      <td>
+        <button class="btn btn-sm btn-primary" onclick="openReportModal('${r.report_id}')">Review & Audit</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function renderAbnormalBox(boxId, items, color) {
@@ -417,12 +891,13 @@ async function renderCalendar() {
 
     // Unknown dates banner
     const unknownReports = calendar["unknown_date"] || [];
+    window._synapseUnknownReports = unknownReports;
     const unkBanner = document.getElementById("calendar-unknown-dates-container");
     if (unknownReports.length > 0) {
       unkBanner.innerHTML = `
         <div style="background:var(--warning-bg); border:1px solid var(--warning); border-radius:var(--radius); padding:0.75rem 1rem; margin-top:1rem; font-size:0.85rem;">
           <strong>⚠ Notice:</strong> ${unknownReports.length} report(s) have unrecorded or missing dates. Dates are not invented.
-          <button class="btn btn-sm btn-outline" style="margin-left:0.5rem;" onclick="showDateReports('Unknown Date', ${JSON.stringify(unknownReports).replace(/"/g, '&quot;')})">View Unscheduled Reports</button>
+          <button class="btn btn-sm btn-outline" style="margin-left:0.5rem;" onclick="showDateReports('Unknown Date', window._synapseUnknownReports)">View Unscheduled Reports</button>
         </div>
       `;
     } else {
@@ -441,9 +916,12 @@ function showDateReports(dateStr, reports) {
       <div style="padding:0.6rem; border:1px solid var(--slate-200); border-radius:var(--radius); margin-bottom:0.5rem; background:#fff; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <strong>${r.report_category}</strong> <span style="font-size:0.75rem; color:var(--slate-500);">(${r.filename})</span><br/>
-          <span style="font-size:0.75rem;">${r.parameter_count} parameters &bull; Status: ${r.extraction_status}</span>
+          <span style="font-size:0.75rem;">${r.parameter_count} parameters &bull; Status: ${r.extraction_status} &bull; Format: ${(r.file_format || 'txt').toUpperCase()}</span>
         </div>
-        <button class="btn btn-sm btn-outline" onclick="openReportModal('${r.report_id}')">Open</button>
+        <div style="display:flex; gap:0.35rem;">
+          <a href="${API_BASE}/reports/${r.report_id}/document" target="_blank" class="btn btn-sm btn-outline" style="text-decoration:none;">📄 View</a>
+          <button class="btn btn-sm btn-primary" onclick="openReportModal('${r.report_id}')">Details</button>
+        </div>
       </div>
     `;
   });
@@ -684,3 +1162,4 @@ function setupUploadModal() {
     }
   });
 }
+

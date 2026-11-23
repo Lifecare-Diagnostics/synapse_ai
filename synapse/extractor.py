@@ -8,6 +8,7 @@ import os
 import re
 from typing import Dict, List, Optional, Tuple
 from synapse.schema import ExtractedDocument, LabResult
+from synapse.llm import LLMClient, get_default_llm_client
 
 
 class Extractor(ABC):
@@ -32,17 +33,149 @@ class Extractor(ABC):
         pass
 
 
-# ==============================================================================
-# LLM EXTRACTOR PLACEHOLDER
-# NOTE: A future LLM-based extractor will implement the Extractor interface here.
-# Example:
-# class LLMExtractor(Extractor):
-#     def __init__(self, model_name: str = "local-quantized-model"):
-#         self.model_name = model_name
-#     def extract(self, text: str, source_file: str) -> ExtractedDocument:
-#         # Prompt model with JSON schema constraint and parse output
-#         ...
-# ==============================================================================
+class LLMExtractor(Extractor):
+    """
+    LLM-based clinical document extractor.
+    Uses structured prompt and JSON constrained generation to extract clinical
+    entities, narrative findings, impressions, and diagnoses.
+    """
+
+    def __init__(self, client: Optional[LLMClient] = None):
+        self.client = client or get_default_llm_client()
+
+    def extract(self, text: str, source_file: str) -> ExtractedDocument:
+        doc_id = f"DOC-{os.path.basename(source_file).replace('.', '_')}"
+        data = self.client.extract_clinical_json(text)
+
+        lab_results = []
+        for item in data.get("lab_results", []):
+            try:
+                res_val = float(item["result_value"]) if item.get("result_value") is not None else None
+            except (ValueError, TypeError):
+                res_val = None
+
+            ref_low = float(item["reference_low"]) if item.get("reference_low") is not None else None
+            ref_high = float(item["reference_high"]) if item.get("reference_high") is not None else None
+
+            lab_results.append(
+                LabResult(
+                    test_name=item.get("test_name", "Unknown Test"),
+                    result_value=res_val,
+                    unit=item.get("unit"),
+                    reference_range_text=item.get("reference_range_text"),
+                    reference_low=ref_low,
+                    reference_high=ref_high,
+                    flag="unknown",
+                    source_text=f"{item.get('test_name')}: {res_val} {item.get('unit') or ''}".strip(),
+                    source_page=1,
+                    confidence=0.92,
+                )
+            )
+
+        key_sections = data.get("key_sections", {})
+        if data.get("clinical_summary"):
+            key_sections["Clinical Summary"] = data["clinical_summary"]
+
+        # Record LLM usage in central tracker if usage was captured
+        if hasattr(self.client, "last_usage") and self.client.last_usage:
+            try:
+                from synapse.usage_tracker import get_usage_tracker
+                u = self.client.last_usage
+                get_usage_tracker().record(
+                    provider=u.get("provider", "unknown"),
+                    model=u.get("model", "unknown"),
+                    input_tokens=u.get("total_input_tokens"),
+                    output_tokens=u.get("total_output_tokens"),
+                    total_tokens=u.get("total_tokens"),
+                    document_id=doc_id,
+                    status=u.get("status", "success"),
+                    processing_time_seconds=u.get("processing_time_seconds"),
+                )
+            except Exception:
+                pass
+
+        return ExtractedDocument(
+            document_id=doc_id,
+            source_file=os.path.basename(source_file),
+            document_type=data.get("document_type", "clinical note"),
+            patient_id=data.get("patient_id"),
+            patient_name=data.get("patient_name"),
+            document_date=data.get("document_date"),
+            date_label=data.get("date_label") or "Date",
+            lab_results=lab_results,
+            key_text_sections=key_sections,
+            extraction_method="llm_prompt",
+            validation_errors=[],
+        )
+
+
+class HybridExtractor(Extractor):
+    """
+    Hybrid Clinical Extractor combining deterministic regex rules and LLM intelligence.
+    - Uses RuleBasedExtractor for high-speed, zero-hallucination standard lab panels.
+    - Routes unstructured documents (Radiology, Ultrasound, Clinical Notes, Prescriptions)
+      and narrative sections through LLMExtractor.
+    """
+
+    def __init__(
+        self,
+        rule_extractor: Optional["RuleBasedExtractor"] = None,
+        llm_extractor: Optional[LLMExtractor] = None,
+    ):
+        self.rule_extractor = rule_extractor or RuleBasedExtractor()
+        self.llm_extractor = llm_extractor or LLMExtractor()
+
+    def extract(self, text: str, source_file: str) -> ExtractedDocument:
+        # Step 1: Run deterministic rule extraction
+        rule_doc = self.rule_extractor.extract(text, source_file)
+
+        # Step 2: Evaluate if LLM enrichment is needed
+        # Standard structured lab reports with extracted results stay on the deterministic fast-path
+        is_standard_lab = rule_doc.document_type == "lab report" and len(rule_doc.lab_results) > 0
+        if is_standard_lab:
+            return rule_doc
+
+        # Unstructured narrative document or 0 lab results found -> invoke LLM for clinical understanding
+        try:
+            llm_doc = self.llm_extractor.extract(text, source_file)
+
+            # Merge: Preserve high-confidence metadata from rule extraction if present
+            merged_patient_id = rule_doc.patient_id or llm_doc.patient_id
+            merged_patient_name = rule_doc.patient_name or llm_doc.patient_name
+            merged_date = rule_doc.document_date or llm_doc.document_date
+            merged_date_label = rule_doc.date_label or llm_doc.date_label
+
+            # Merge key text sections
+            merged_sections = dict(rule_doc.key_text_sections)
+            for k, v in llm_doc.key_text_sections.items():
+                if k not in merged_sections or not merged_sections[k]:
+                    merged_sections[k] = v
+
+            # Merge lab results (rule-based results take precedence)
+            merged_labs = list(rule_doc.lab_results)
+            if not merged_labs and llm_doc.lab_results:
+                merged_labs = list(llm_doc.lab_results)
+
+            doc_type = rule_doc.document_type
+            if doc_type == "clinical note" and llm_doc.document_type != "clinical note":
+                doc_type = llm_doc.document_type
+
+            return ExtractedDocument(
+                document_id=rule_doc.document_id,
+                source_file=rule_doc.source_file,
+                document_type=doc_type,
+                patient_id=merged_patient_id,
+                patient_name=merged_patient_name,
+                document_date=merged_date,
+                date_label=merged_date_label,
+                lab_results=merged_labs,
+                key_text_sections=merged_sections,
+                extraction_method="hybrid_rules_llm",
+                validation_errors=rule_doc.validation_errors,
+            )
+        except Exception:
+            # If LLM encounters an issue, gracefully fall back to the rule-based document
+            return rule_doc
 
 
 class RuleBasedExtractor(Extractor):

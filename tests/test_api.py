@@ -339,3 +339,139 @@ async def test_api_file_upload_scanned_pdf_needs_ocr(app_instance):
     res = await handler(file=pdf_file, patient_id="SYN-1001")
     assert res["extraction_status"] == "ocr_required"
     assert "needs ocr" in res["message"].lower()
+
+
+@pytest.mark.anyio
+async def test_api_report_document_and_content(app_instance, tmp_path):
+    """Verify document file serving, content endpoint, and safe path validation."""
+    doc_route = next(r for r in app_instance.routes if r.path == "/api/v1/reports/{report_id}/document" and "GET" in r.methods)
+    content_route = next(r for r in app_instance.routes if r.path == "/api/v1/reports/{report_id}/content" and "GET" in r.methods)
+    upload_route = next(r for r in app_instance.routes if r.path == "/api/v1/reports/upload" and "POST" in r.methods)
+
+    # 1. Upload a valid text report
+    txt_content = (
+        b"SYNTHETIC TEST DOCUMENT\n"
+        b"Patient Name: Rohan Example\n"
+        b"Patient ID: SYN-1001\n"
+        b"Registered On: 2026-11-28\n"
+        b"Report Type: Complete Blood Count\n\n"
+        b"Haemoglobin: 15.0 g/dL (Reference 13.0 - 17.0)\n"
+    )
+    upload_file = UploadFile(filename="doc_test_cbc.txt", file=io.BytesIO(txt_content))
+    upload_res = await upload_route.endpoint(file=upload_file, patient_id="SYN-1001")
+    rep_id = upload_res["report_id"]
+
+    # 2. Get content
+    content_res = content_route.endpoint(report_id=rep_id)
+    assert content_res["report_id"] == rep_id
+    assert content_res["is_text"] is True
+    assert "Haemoglobin: 15.0 g/dL" in content_res["content"]
+
+    # 3. Get document
+    doc_resp = doc_route.endpoint(report_id=rep_id)
+    assert doc_resp.media_type.startswith("text/plain")
+
+    # 4. Non-existent report -> 404
+    with pytest.raises(HTTPException) as exc:
+        doc_route.endpoint(report_id="NON-EXISTENT-ID")
+    assert exc.value.status_code == 404
+
+    # 5. PDF upload & document retrieval
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", size=12)
+    pdf.cell(200, 10, text="Patient Name: Rohan Example", ln=1)
+    pdf.cell(200, 10, text="Patient ID: SYN-1001", ln=1)
+    pdf.cell(200, 10, text="Haemoglobin: 13.9 g/dL", ln=1)
+    pdf_bytes = bytes(pdf.output())
+
+    pdf_upload = UploadFile(filename="doc_test_cbc.pdf", file=io.BytesIO(pdf_bytes))
+    pdf_res = await upload_route.endpoint(file=pdf_upload, patient_id="SYN-1001")
+    pdf_rep_id = pdf_res["report_id"]
+
+    pdf_content = content_route.endpoint(report_id=pdf_rep_id)
+    assert pdf_content["file_format"] == "pdf"
+    assert pdf_content["is_text"] is False
+    assert pdf_content["document_url"] == f"/api/v1/reports/{pdf_rep_id}/document"
+
+    pdf_doc = doc_route.endpoint(report_id=pdf_rep_id)
+    assert pdf_doc.media_type == "application/pdf"
+
+    # 6. Test safe path traversal prevention
+    from synapse.api import _validate_safe_path
+    with pytest.raises(HTTPException) as exc_path:
+        _validate_safe_path("../../windows/system32/cmd.exe")
+    assert exc_path.value.status_code == 403
+
+
+@pytest.mark.anyio
+async def test_api_ocr_status_endpoint(app_instance):
+    """Verify GET /api/v1/ocr/status endpoint returns valid metadata."""
+    route = next(r for r in app_instance.routes if r.path == "/api/v1/ocr/status" and "GET" in r.methods)
+    handler = route.endpoint
+    res = handler()
+    assert res["engine"] == "tesseract"
+    assert "available" in res
+    assert "binary_path" in res
+
+
+@pytest.mark.anyio
+async def test_api_file_upload_image_scanned_needs_ocr(app_instance, tmp_path, monkeypatch):
+    """Verify image upload without active OCR returns 201 with 'ocr_required' status."""
+    from PIL import Image
+    upload_route = next(r for r in app_instance.routes if r.path == "/api/v1/reports/upload" and "POST" in r.methods)
+    content_route = next(r for r in app_instance.routes if r.path == "/api/v1/reports/{report_id}/content" and "GET" in r.methods)
+    doc_route = next(r for r in app_instance.routes if r.path == "/api/v1/reports/{report_id}/document" and "GET" in r.methods)
+
+    # Ensure OCR is reported unavailable
+    monkeypatch.setattr("synapse.api.read_image_file", lambda path: "needs OCR - not supported yet")
+
+    img_buf = io.BytesIO()
+    img = Image.new("RGB", (200, 200), color=(255, 255, 255))
+    img.save(img_buf, format="PNG")
+    img_bytes = img_buf.getvalue()
+
+    upload_file = UploadFile(filename="scan_xray_test.png", file=io.BytesIO(img_bytes))
+    res = await upload_route.endpoint(file=upload_file, patient_id="SYN-1001")
+
+    assert res["extraction_status"] == "ocr_required"
+    assert res["review_status"] == "needs_review"
+    assert "needs ocr" in res["message"].lower()
+
+    rep_id = res["report_id"]
+    content_res = content_route.endpoint(report_id=rep_id)
+    assert content_res["is_image"] is True
+    assert content_res["file_format"] == "png"
+
+    doc_res = doc_route.endpoint(report_id=rep_id)
+    assert doc_res.media_type == "image/png"
+
+
+@pytest.mark.anyio
+async def test_api_file_upload_image_with_ocr_extraction(app_instance, monkeypatch):
+    """Verify image upload with mocked OCR extracts parameters into wallet."""
+    from PIL import Image
+    upload_route = next(r for r in app_instance.routes if r.path == "/api/v1/reports/upload" and "POST" in r.methods)
+
+    mock_text = (
+        "SYNTHETIC TEST DOCUMENT\n"
+        "Patient Name: Rohan Example\n"
+        "Patient ID: SYN-1001\n"
+        "Registered On: 2026-11-28\n"
+        "Report Type: Complete Blood Count\n\n"
+        "Haemoglobin: 14.2 g/dL (Reference 13.0 - 17.0)\n"
+    )
+    monkeypatch.setattr("synapse.api.read_image_file", lambda path: mock_text)
+
+    img_buf = io.BytesIO()
+    img = Image.new("RGB", (300, 100), color=(255, 255, 255))
+    img.save(img_buf, format="PNG")
+    img_bytes = img_buf.getvalue()
+
+    upload_file = UploadFile(filename="cbc_scan_extracted.png", file=io.BytesIO(img_bytes))
+    res = await upload_route.endpoint(file=upload_file, patient_id="SYN-1001")
+
+    assert res["extraction_status"] == "success"
+    assert res["parameters_count"] >= 1
+    assert res["patient_id"] == "SYN-1001"
+

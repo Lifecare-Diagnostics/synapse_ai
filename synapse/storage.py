@@ -18,7 +18,10 @@ from synapse.schema import (
     ReportParameter,
     ReviewFlag,
     ExtractedDocument,
+    FieldCorrection,
+    ReviewAuditEntry,
 )
+from synapse.auth import User, UserInDB, hash_password
 from synapse.standardizer import standardize_parameter_name, classify_abnormality
 
 
@@ -109,11 +112,56 @@ class WalletStorage:
 
             CREATE INDEX IF NOT EXISTS idx_reports_patient_date ON reports(patient_id, report_date);
             CREATE INDEX IF NOT EXISTS idx_parameters_patient_std ON parameters(patient_id, standardized_name, report_date);
+
+            CREATE TABLE IF NOT EXISTS review_audit (
+                audit_id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL,
+                action TEXT NOT NULL,
+                reviewer TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                previous_status TEXT NOT NULL,
+                new_status TEXT NOT NULL,
+                comments TEXT,
+                corrections_json TEXT,
+                FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_review_audit_report ON review_audit(report_id);
+
+            CREATE TABLE IF NOT EXISTS users (
+                user_id TEXT PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                role TEXT NOT NULL,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
             """)
 
             # Add content_hash if table already existed without it
             try:
                 conn.execute("ALTER TABLE reports ADD COLUMN content_hash TEXT;")
+            except Exception:
+                pass
+
+            # Seed default synthetic RBAC users if users table is empty
+            try:
+                cur = conn.execute("SELECT count(*) as cnt FROM users;")
+                if cur.fetchone()["cnt"] == 0:
+                    now_iso = datetime.now(timezone.utc).isoformat()
+                    defaults = [
+                        ("USR-TECH-01", "tech.anil", hash_password("Tech@123"), "Anil Kumar (Lab Technician)", "Technician"),
+                        ("USR-AUDIT-01", "auditor.meera", hash_password("Audit@123"), "Meera Sen (Quality Auditor)", "Auditor"),
+                        ("USR-DOC-01", "dr.sunita", hash_password("Doctor@123"), "Dr. Sunita Rao (Lead Pathologist)", "Pathologist"),
+                        ("USR-ADMIN-01", "admin.synapse", hash_password("Admin@123"), "Synapse Administrator", "Administrator"),
+                    ]
+                    conn.executemany(
+                        "INSERT INTO users (user_id, username, password_hash, full_name, role, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)",
+                        [(u[0], u[1], u[2], u[3], u[4], now_iso) for u in defaults],
+                    )
             except Exception:
                 pass
 
@@ -409,6 +457,7 @@ class WalletStorage:
             doc_flags = [ReviewFlag(**f) for f in json.loads(r["document_level_flags_json"] or "[]")]
             sections = json.loads(r["key_text_sections_json"] or "{}")
             errors = json.loads(r["validation_errors_json"] or "[]")
+            history = self.get_report_review_history(report_id)
 
             return PatientReport(
                 report_id=r["report_id"],
@@ -427,6 +476,7 @@ class WalletStorage:
                 key_text_sections=sections,
                 document_level_flags=doc_flags,
                 validation_errors=errors,
+                review_history=history,
             )
 
     def list_patient_reports(
@@ -506,6 +556,7 @@ class WalletStorage:
                 "report_id": r.report_id,
                 "report_category": r.report_category,
                 "filename": r.original_filename,
+                "file_format": r.file_format,
                 "extraction_status": r.extraction_status,
                 "review_status": r.review_status,
                 "parameter_count": len(r.parameters),
@@ -832,4 +883,330 @@ class WalletStorage:
 
         self.save_report(report)
         return report
+
+    # -------------------------------------------------------------------------
+    # Review Queue & Field Correction Operations (Phase 6B)
+    # -------------------------------------------------------------------------
+
+    def record_review_action(
+        self,
+        report_id: str,
+        action: str,
+        reviewer: str,
+        comments: Optional[str] = None,
+        corrections: Optional[List[FieldCorrection]] = None,
+    ) -> ReviewAuditEntry:
+        """
+        Record a review action (approve, reject, needs_review, correct_field)
+        and update the report's review_status in storage.
+        """
+        valid_actions = {"approve", "reject", "needs_review", "correct_field"}
+        if action not in valid_actions:
+            raise ValueError(f"Invalid review action '{action}'. Must be one of {valid_actions}")
+
+        status_mapping = {
+            "approve": "approved",
+            "reject": "rejected",
+            "needs_review": "needs_review",
+            "correct_field": "corrected",
+        }
+        new_status = status_mapping[action]
+
+        with self._get_connection() as conn:
+            cur = conn.execute("SELECT review_status FROM reports WHERE report_id = ?", (report_id,))
+            row = cur.fetchone()
+            if not row:
+                raise ValueError(f"Report '{report_id}' not found.")
+            prev_status = row["review_status"]
+
+            now_iso = datetime.now(timezone.utc).isoformat()
+            audit_id = f"AUDIT-{uuid.uuid4().hex[:8].upper()}"
+            corrections_json = json.dumps([c.model_dump() for c in (corrections or [])])
+
+            conn.execute(
+                """
+                INSERT INTO review_audit (
+                    audit_id, report_id, action, reviewer, timestamp,
+                    previous_status, new_status, comments, corrections_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (audit_id, report_id, action, reviewer, now_iso, prev_status, new_status, comments, corrections_json),
+            )
+            conn.execute("UPDATE reports SET review_status = ? WHERE report_id = ?", (new_status, report_id))
+
+        return ReviewAuditEntry(
+            entry_id=audit_id,
+            report_id=report_id,
+            action=action,
+            reviewer=reviewer,
+            timestamp=now_iso,
+            previous_status=prev_status,
+            new_status=new_status,
+            comments=comments,
+            corrections=corrections or [],
+        )
+
+    def correct_report_parameter(
+        self,
+        report_id: str,
+        parameter_id: str,
+        corrected_value: Optional[float],
+        corrected_name: Optional[str],
+        corrected_unit: Optional[str],
+        reviewer: str,
+        reason: str,
+    ) -> Dict[str, Any]:
+        """
+        Apply a field-level human correction to an extracted report parameter.
+        Re-evaluates abnormality and clinical flag, maintaining a full audit trail.
+        """
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                "SELECT * FROM parameters WHERE parameter_id = ? AND report_id = ?",
+                (parameter_id, report_id),
+            )
+            p_row = cur.fetchone()
+            if not p_row:
+                raise ValueError(f"Parameter '{parameter_id}' in report '{report_id}' not found.")
+
+            orig_val = p_row["result_value"]
+            orig_name = p_row["original_name"]
+            orig_unit = p_row["unit"]
+
+            new_val = corrected_value if corrected_value is not None else orig_val
+            new_name = corrected_name if corrected_name is not None else orig_name
+            new_unit = corrected_unit if corrected_unit is not None else orig_unit
+
+            ref_low = p_row["reference_low"]
+            ref_high = p_row["reference_high"]
+            ref_text = p_row["reference_range_text"]
+
+            # Determine clinical flag
+            flag = "unknown"
+            if new_val is not None and ref_low is not None and ref_high is not None:
+                if new_val < ref_low:
+                    flag = "low"
+                elif new_val > ref_high:
+                    flag = "high"
+                else:
+                    flag = "normal"
+            elif new_val is not None and ref_high is not None and ref_low is None:
+                flag = "high" if new_val > ref_high else "normal"
+
+            # Determine abnormality category
+            if new_val is None:
+                cat = "requires_review"
+            elif ref_text is None and ref_low is None and ref_high is None:
+                cat = "reference_range_unavailable"
+            elif flag == "low":
+                cat = "below_range"
+            elif flag == "high":
+                cat = "above_range"
+            elif flag == "normal":
+                cat = "within_range"
+            else:
+                cat = "reference_range_unavailable"
+
+            std_name = standardize_parameter_name(new_name)
+
+            conn.execute(
+                """
+                UPDATE parameters
+                SET original_name = ?, standardized_name = ?, result_value = ?,
+                    unit = ?, clinical_flag = ?, abnormality_category = ?, extraction_status = 'ok'
+                WHERE parameter_id = ?
+                """,
+                (new_name, std_name, new_val, new_unit, flag, cat, parameter_id),
+            )
+
+        correction = FieldCorrection(
+            field_name=orig_name,
+            original_value=orig_val,
+            corrected_value=new_val,
+            reviewer=reviewer,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            reason=reason,
+        )
+
+        audit_entry = self.record_review_action(
+            report_id=report_id,
+            action="correct_field",
+            reviewer=reviewer,
+            comments=f"Field corrected: {orig_name} ({orig_val} -> {new_val}). Reason: {reason}",
+            corrections=[correction],
+        )
+
+        return {
+            "parameter_id": parameter_id,
+            "report_id": report_id,
+            "original_name": new_name,
+            "result_value": new_val,
+            "unit": new_unit,
+            "clinical_flag": flag,
+            "abnormality_category": cat,
+            "audit_entry": audit_entry.model_dump(),
+        }
+
+    def get_report_review_history(self, report_id: str) -> List[ReviewAuditEntry]:
+        """Fetch chronological audit history for a report."""
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                "SELECT * FROM review_audit WHERE report_id = ? ORDER BY timestamp ASC",
+                (report_id,),
+            )
+            rows = cur.fetchall()
+
+        entries: List[ReviewAuditEntry] = []
+        for r in rows:
+            corrs = []
+            if r["corrections_json"]:
+                try:
+                    raw_c = json.loads(r["corrections_json"])
+                    corrs = [FieldCorrection(**c) for c in raw_c]
+                except Exception:
+                    pass
+            entries.append(
+                ReviewAuditEntry(
+                    entry_id=r["audit_id"],
+                    report_id=r["report_id"],
+                    action=r["action"],
+                    reviewer=r["reviewer"],
+                    timestamp=r["timestamp"],
+                    previous_status=r["previous_status"],
+                    new_status=r["new_status"],
+                    comments=r["comments"],
+                    corrections=corrs,
+                )
+            )
+        return entries
+
+    def list_review_queue(self, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        List all reports requiring human review or matching status_filter.
+        """
+        with self._get_connection() as conn:
+            if status_filter:
+                cur = conn.execute(
+                    """
+                    SELECT r.*, p.patient_name
+                    FROM reports r
+                    LEFT JOIN patients p ON r.patient_id = p.patient_id
+                    WHERE r.review_status = ?
+                    ORDER BY r.upload_datetime DESC
+                    """,
+                    (status_filter,),
+                )
+            else:
+                cur = conn.execute(
+                    """
+                    SELECT r.*, p.patient_name
+                    FROM reports r
+                    LEFT JOIN patients p ON r.patient_id = p.patient_id
+                    WHERE r.review_status IN ('needs_review', 'unsupported_parameters', 'corrected')
+                    ORDER BY r.upload_datetime DESC
+                    """
+                )
+            rows = cur.fetchall()
+
+        queue_items = []
+        for r in rows:
+            queue_items.append(
+                {
+                    "report_id": r["report_id"],
+                    "patient_id": r["patient_id"],
+                    "patient_name": r["patient_name"] or f"Patient {r['patient_id']}",
+                    "report_date": r["report_date"],
+                    "report_category": r["report_category"],
+                    "original_filename": r["original_filename"],
+                    "extraction_status": r["extraction_status"],
+                    "review_status": r["review_status"],
+                    "upload_datetime": r["upload_datetime"],
+                }
+            )
+        return queue_items
+
+    # -------------------------------------------------------------------------
+    # User & Authentication Operations (Phase 7A / 7B)
+    # -------------------------------------------------------------------------
+
+    def create_user(
+        self,
+        username: str,
+        password_hash: str,
+        full_name: str,
+        role: str,
+    ) -> User:
+        """Register a new system user with assigned RBAC role."""
+        user_id = f"USR-{uuid.uuid4().hex[:8].upper()}"
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO users (user_id, username, password_hash, full_name, role, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, 1, ?)
+                """,
+                (user_id, username.strip().lower(), password_hash, full_name, role, now_iso),
+            )
+        return User(
+            user_id=user_id,
+            username=username.strip().lower(),
+            full_name=full_name,
+            role=role,
+            is_active=True,
+        )
+
+    def get_user_by_username(self, username: str) -> Optional[UserInDB]:
+        """Fetch user by case-insensitive username."""
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                "SELECT * FROM users WHERE LOWER(username) = ? AND is_active = 1",
+                (username.strip().lower(),),
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return UserInDB(
+                user_id=row["user_id"],
+                username=row["username"],
+                password_hash=row["password_hash"],
+                full_name=row["full_name"],
+                role=row["role"],
+                is_active=bool(row["is_active"]),
+            )
+
+    def get_user_by_id(self, user_id: str) -> Optional[UserInDB]:
+        """Fetch user by user_id."""
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                "SELECT * FROM users WHERE user_id = ? AND is_active = 1",
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return UserInDB(
+                user_id=row["user_id"],
+                username=row["username"],
+                password_hash=row["password_hash"],
+                full_name=row["full_name"],
+                role=row["role"],
+                is_active=bool(row["is_active"]),
+            )
+
+    def list_users(self) -> List[User]:
+        """List all registered system users."""
+        with self._get_connection() as conn:
+            cur = conn.execute("SELECT user_id, username, full_name, role, is_active FROM users ORDER BY created_at ASC")
+            rows = cur.fetchall()
+            return [
+                User(
+                    user_id=r["user_id"],
+                    username=r["username"],
+                    full_name=r["full_name"],
+                    role=r["role"],
+                    is_active=bool(r["is_active"]),
+                )
+                for r in rows
+            ]
+
 
