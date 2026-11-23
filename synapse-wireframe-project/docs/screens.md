@@ -6,9 +6,9 @@
 - **Mock Data**: High-level counts, and a table showing recent reports for Patients Alpha and Beta.
 
 ## Upload
-- **Purpose**: Facilitates ingestion of new reports (Digital PDF, Scanned PDF, Images).
-- **Components**: Drag-and-drop zone, processing step tracker.
-- **Mock Data**: Uses hardcoded file upload simulation for 'CBC_report.pdf'.
+- **Purpose**: Facilitates ingestion of new reports across multiple formats (Digital PDF, Scanned PDF with OCR, Medical Images, and Narrative Clinical Notes).
+- **Components**: Drag-and-drop zone, format simulation switcher (Digital PDF, Scanned OCR, Image OCR, Clinical Note LLM), processing step tracker, and review queue transition button.
+- **Mock Data**: Simulations for 'CBC_report.pdf' (Digital), 'scanned_lipid_profile.pdf' (OCR), 'biochemistry_slip.png' (Image OCR), and 'dr_sharma_clinical_note.txt' (LLM).
 
 ## Review
 - **Purpose**: Human-in-the-loop validation of AI-extracted data against the original report.

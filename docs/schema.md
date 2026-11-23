@@ -6,7 +6,7 @@ This document defines the Pydantic schema used by Synapse AI for structured extr
 
 ## 1. Input Dataset Inventory (10 Synthetic Test Files)
 
-All test documents are located in `lifecare_ai_poc_phase3_input/input/`. All files carry synthetic disclaimers (`SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA`).
+All test documents are located in `data/synthetic_inputs/` (and original workspace path `lifecare_ai_poc_phase3_input/input/`). All files carry synthetic disclaimers (`SYNTHETIC TEST DOCUMENT — NOT REAL PATIENT DATA`).
 
 | File | Document Type | Patient ID | Patient Name | Date Found | Date Label | Section Headings / Key Content Labels |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |

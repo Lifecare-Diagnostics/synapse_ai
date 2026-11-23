@@ -128,27 +128,37 @@
             <div id="upload" class="screen">
                 <h2>Upload Reports</h2>
                 <div class="card">
-                    <div style="margin-bottom: 16px;">
-                        <label>Source: </label>
-                        <select style="padding:4px 8px; border-radius:4px; border:1px solid var(--border);">
-                            <option>Lifecare</option>
-                            <option>External</option>
-                            <option>Other</option>
-                        </select>
+                    <div style="margin-bottom: 16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+                        <div>
+                            <label>Source: </label>
+                            <select style="padding:4px 8px; border-radius:4px; border:1px solid var(--border);">
+                                <option>Lifecare Diagnostics</option>
+                                <option>External Lab / Hospital</option>
+                                <option>Patient Upload</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; margin-left:auto;">
+                            <span style="font-size:12px; color:var(--text-muted); font-weight:600;">Simulate Pipeline:</span>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('digital_pdf')">📄 Digital PDF</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('scanned_pdf')">🖨️ Scanned (OCR)</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('medical_image')">🖼️ Image (OCR)</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('clinical_note')">📝 Note (LLM)</button>
+                        </div>
                     </div>
-                    <div class="dropzone" id="dz" onclick="simulateUpload()">
-                        Drag and drop files here, or click to browse.<br><br>
-                        <button class="btn btn-primary" onclick="event.stopPropagation(); simulateUpload()">Upload sample reports</button>
+                    <div class="dropzone" id="dz" onclick="simulateUpload('digital_pdf')">
+                        Drag and drop files here, or click to browse (.pdf, .png, .jpg, .txt, .json).<br><br>
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); simulateUpload('digital_pdf')">Upload Sample CBC (Digital PDF)</button>
                     </div>
                     
                     <div id="upload-list" style="display:none; margin-top:24px;">
                         <h4>Processing Files...</h4>
-                        <div id="ufile-1" style="border:1px solid var(--border); padding:12px; margin-top:8px; border-radius:4px;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <b>CBC_report.pdf</b>
-                                <span class="badge badge-status status-blue" style="position:relative;">Digital PDF <div class="annotation" style="top:50%;left:-20px;">2</div></span>
+                        <div id="ufile-1" style="border:1px solid var(--border); padding:16px; margin-top:8px; border-radius:4px; background:var(--surface);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <b id="upload-filename">CBC_report.pdf</b>
+                                <span class="badge badge-status status-blue" id="upload-badge" style="position:relative;">Digital PDF <div class="annotation" style="top:50%;left:-20px;">2</div></span>
                             </div>
-                            <div class="progress-text" style="font-size:12px; color:var(--text-muted)">Uploaded</div>
+                            <div id="upload-progress-text" class="progress-text" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">Uploaded</div>
+                            <button id="upload-action-btn" class="btn btn-primary" style="display:none; padding:4px 12px; font-size:12px;" onclick="nav('review')">Review Extracted Data &rarr;</button>
                         </div>
                     </div>
                 </div>
@@ -224,8 +234,9 @@
                             </table>
                         </div>
                         <div style="padding:16px; border-top:1px solid var(--border); display:flex; gap:8px; background:var(--bg);">
-                            <button class="btn btn-outline">Reject</button>
-                            <button class="btn btn-primary" onclick="showToast()" style="margin-left:auto;">Approve & Save to Synapse</button>
+                            <button class="btn btn-outline" onclick="rejectReportWireframe()">Reject</button>
+                            <button class="btn btn-outline" id="btn-wireframe-export-fhir" onclick="exportFhirWireframe()">Export FHIR</button>
+                            <button class="btn btn-primary" onclick="approveReportWireframe()" style="margin-left:auto;">Approve & Save to Synapse</button>
                         </div>
                     </div>
                 </div>

@@ -570,27 +570,37 @@ body.annotations-on .toggle-knob {
             <div id="upload" class="screen">
                 <h2>Upload Reports</h2>
                 <div class="card">
-                    <div style="margin-bottom: 16px;">
-                        <label>Source: </label>
-                        <select style="padding:4px 8px; border-radius:4px; border:1px solid var(--border);">
-                            <option>Lifecare</option>
-                            <option>External</option>
-                            <option>Other</option>
-                        </select>
+                    <div style="margin-bottom: 16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+                        <div>
+                            <label>Source: </label>
+                            <select style="padding:4px 8px; border-radius:4px; border:1px solid var(--border);">
+                                <option>Lifecare Diagnostics</option>
+                                <option>External Lab / Hospital</option>
+                                <option>Patient Upload</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; margin-left:auto;">
+                            <span style="font-size:12px; color:var(--text-muted); font-weight:600;">Simulate Pipeline:</span>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('digital_pdf')">📄 Digital PDF</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('scanned_pdf')">🖨️ Scanned (OCR)</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('medical_image')">🖼️ Image (OCR)</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('clinical_note')">📝 Note (LLM)</button>
+                        </div>
                     </div>
-                    <div class="dropzone" id="dz" onclick="simulateUpload()">
-                        Drag and drop files here, or click to browse.<br><br>
-                        <button class="btn btn-primary" onclick="event.stopPropagation(); simulateUpload()">Upload sample reports</button>
+                    <div class="dropzone" id="dz" onclick="simulateUpload('digital_pdf')">
+                        Drag and drop files here, or click to browse (.pdf, .png, .jpg, .txt, .json).<br><br>
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); simulateUpload('digital_pdf')">Upload Sample CBC (Digital PDF)</button>
                     </div>
                     
                     <div id="upload-list" style="display:none; margin-top:24px;">
                         <h4>Processing Files...</h4>
-                        <div id="ufile-1" style="border:1px solid var(--border); padding:12px; margin-top:8px; border-radius:4px;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <b>CBC_report.pdf</b>
-                                <span class="badge badge-status status-blue" style="position:relative;">Digital PDF <div class="annotation" style="top:50%;left:-20px;">2</div></span>
+                        <div id="ufile-1" style="border:1px solid var(--border); padding:16px; margin-top:8px; border-radius:4px; background:var(--surface);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <b id="upload-filename">CBC_report.pdf</b>
+                                <span class="badge badge-status status-blue" id="upload-badge" style="position:relative;">Digital PDF <div class="annotation" style="top:50%;left:-20px;">2</div></span>
                             </div>
-                            <div class="progress-text" style="font-size:12px; color:var(--text-muted)">Uploaded</div>
+                            <div id="upload-progress-text" class="progress-text" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">Uploaded</div>
+                            <button id="upload-action-btn" class="btn btn-primary" style="display:none; padding:4px 12px; font-size:12px;" onclick="nav('review')">Review Extracted Data &rarr;</button>
                         </div>
                     </div>
                 </div>
@@ -666,8 +676,9 @@ body.annotations-on .toggle-knob {
                             </table>
                         </div>
                         <div style="padding:16px; border-top:1px solid var(--border); display:flex; gap:8px; background:var(--bg);">
-                            <button class="btn btn-outline">Reject</button>
-                            <button class="btn btn-primary" onclick="showToast()" style="margin-left:auto;">Approve & Save to Synapse</button>
+                            <button class="btn btn-outline" onclick="rejectReportWireframe()">Reject</button>
+                            <button class="btn btn-outline" id="btn-wireframe-export-fhir" onclick="exportFhirWireframe()">Export FHIR</button>
+                            <button class="btn btn-primary" onclick="approveReportWireframe()" style="margin-left:auto;">Approve & Save to Synapse</button>
                         </div>
                     </div>
                 </div>
@@ -810,7 +821,7 @@ body.annotations-on .toggle-knob {
                             <b>Summary:</b><br>
                             Patient ALPHA has 3 CBC reports on file. Hemoglobin levels have shown a steady increase from 11.8 g/dL (Low) in Mar 2024 to 12.4 g/dL (Normal) in Sep 2026.<br><br>
                             <b>Trend Note:</b><br>
-                            The initial reading was below the reference range (12.0-15.5 g/dL), but subsequent readings in 2025 and 2026 have returned to normal levels.<br><br>
+                            The initial reading was below the reference range (12.0-15.5 g/dL), but subsequent readings in 2025 and 2026 are within the reference range.<br><br>
                             <div style="display:flex; gap:8px; margin-top:12px;">
                                 <span class="badge badge-synthetic" style="background:white; cursor:pointer;">Source: Mar '24 CBC</span>
                                 <span class="badge badge-synthetic" style="background:white; cursor:pointer;">Source: Feb '25 CBC</span>
@@ -967,41 +978,116 @@ window.Synapse.screens.dashboard = {
 
 </script>
     <script>
-// upload.js: Logic for Upload screen
+// upload.js: Logic for Upload screen supporting multi-format ingestion pipeline
+window.Synapse = window.Synapse || {};
+window.Synapse.screens = window.Synapse.screens || {};
+
 window.Synapse.screens.upload = {
-    simulate: function() {
+    currentTimer: null,
+    
+    samples: {
+        digital_pdf: {
+            filename: "CBC_report.pdf",
+            badgeText: "Digital PDF",
+            badgeClass: "status-blue",
+            steps: [
+                "1/5 Uploaded (248 KB)",
+                "2/5 Format detected: Digital PDF (vector text layer)",
+                "3/5 Digital text extracted via PyMuPDF (100% density)",
+                "4/5 Deterministic rule-based fields extracted (CBC panel)",
+                "5/5 Awaiting clinical review"
+            ]
+        },
+        scanned_pdf: {
+            filename: "scanned_lipid_profile.pdf",
+            badgeText: "Scanned PDF (OCR)",
+            badgeClass: "status-amber",
+            steps: [
+                "1/5 Uploaded (1.2 MB)",
+                "2/5 Format detected: Scanned PDF (0 text layer detected)",
+                "3/5 Hybrid OCR fallback initiated (rendering 300 DPI)",
+                "4/5 Optical character recognition extracted 6 parameters",
+                "5/5 Awaiting clinical review"
+            ]
+        },
+        medical_image: {
+            filename: "biochemistry_slip.png",
+            badgeText: "Medical Image (OCR)",
+            badgeClass: "status-amber",
+            steps: [
+                "1/5 Uploaded (820 KB)",
+                "2/5 Format detected: Medical Image (.png)",
+                "3/5 Image contrast pre-processing applied",
+                "4/5 Tesseract OCR extraction complete",
+                "5/5 Awaiting clinical review"
+            ]
+        },
+        clinical_note: {
+            filename: "dr_sharma_clinical_note.txt",
+            badgeText: "Narrative Note (LLM)",
+            badgeClass: "status-green",
+            steps: [
+                "1/5 Uploaded (14 KB)",
+                "2/5 Format detected: Unstructured Doctor Note",
+                "3/5 Phase 5 Hybrid LLM Router activated",
+                "4/5 Clinical entities, findings & diagnoses structured",
+                "5/5 Awaiting clinical review"
+            ]
+        }
+    },
+
+    simulate: function(formatKey = "digital_pdf") {
+        if (this.currentTimer) {
+            clearInterval(this.currentTimer);
+        }
+
+        const sample = this.samples[formatKey] || this.samples.digital_pdf;
         const list = document.getElementById('upload-list');
         list.style.display = 'block';
-        const text = list.querySelector('.progress-text');
-        
-        const steps = [
-            "Uploaded",
-            "Format detected: Digital PDF",
-            "Text extracted",
-            "Fields extracted",
-            "Awaiting validation"
-        ];
-        
+
+        const nameEl = document.getElementById('upload-filename');
+        const badgeEl = document.getElementById('upload-badge');
+        const textEl = document.getElementById('upload-progress-text');
+        const actionEl = document.getElementById('upload-action-btn');
+
+        if (nameEl) nameEl.innerText = sample.filename;
+        if (badgeEl) {
+            badgeEl.innerText = sample.badgeText;
+            badgeEl.className = "badge badge-status " + sample.badgeClass;
+        }
+        if (actionEl) actionEl.style.display = 'none';
+
+        textEl.style.color = "var(--text-muted)";
+        textEl.style.fontWeight = "normal";
+
+        const steps = sample.steps;
         let i = 0;
-        const interval = setInterval(() => {
-            if(i < steps.length) {
-                text.innerText = steps[i];
+        textEl.innerText = steps[0];
+
+        this.currentTimer = setInterval(() => {
+            i++;
+            if (i < steps.length) {
+                textEl.innerText = steps[i];
                 if (i === steps.length - 1) {
-                    text.style.color = "var(--amber)";
-                    text.style.fontWeight = "bold";
+                    textEl.style.color = "var(--amber)";
+                    textEl.style.fontWeight = "bold";
+                    if (actionEl) actionEl.style.display = 'inline-block';
+                    clearInterval(this.currentTimer);
                 }
-                i++;
             } else {
-                clearInterval(interval);
+                clearInterval(this.currentTimer);
             }
-        }, 800);
+        }, 650);
     },
+
     render: function(container) {},
     init: function() {}
 };
 
-// Global alias
-window.simulateUpload = window.Synapse.screens.upload.simulate;
+// Global aliases
+window.simulateUpload = function(formatKey) {
+    window.Synapse.screens.upload.simulate(formatKey || "digital_pdf");
+};
 
 </script>
     <script>
@@ -1009,6 +1095,100 @@ window.simulateUpload = window.Synapse.screens.upload.simulate;
 window.Synapse.screens.review = {
     render: function(container) {},
     init: function() {}
+};
+
+window.reviewAuditLog = [
+    { timestamp: "2024-03-14 10:30", reviewer: "OCR / Pipeline", action: "initial_ingest", status: "needs_review", note: "Extracted with 1 low confidence field." }
+];
+
+window.currentReportStatus = "needs_review";
+
+window.approveReportWireframe = function() {
+    window.currentReportStatus = "approved";
+    window.reviewAuditLog.push({
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        reviewer: "Dr. Pathologist",
+        action: "approve",
+        status: "approved",
+        note: "Verified against laboratory analyzer output. Approved for clinical wallet."
+    });
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.innerText = "✓ Report Approved & Verified. FHIR R4 Export unlocked.";
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+    const fhirBtn = document.getElementById("btn-wireframe-export-fhir");
+    if (fhirBtn) {
+        fhirBtn.style.color = "var(--green)";
+        fhirBtn.innerText = "✓ Export FHIR (Ready)";
+    }
+};
+
+window.rejectReportWireframe = function() {
+    window.currentReportStatus = "rejected";
+    window.reviewAuditLog.push({
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        reviewer: "Dr. Pathologist",
+        action: "reject",
+        status: "rejected",
+        note: "Sample hemolysis detected. Specimen rejected."
+    });
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.innerText = "❌ Report Rejected. FHIR R4 export blocked.";
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+    const fhirBtn = document.getElementById("btn-wireframe-export-fhir");
+    if (fhirBtn) {
+        fhirBtn.style.color = "var(--red)";
+        fhirBtn.innerText = "❌ Export FHIR (Blocked)";
+    }
+};
+
+window.exportFhirWireframe = function() {
+    const toast = document.getElementById('toast');
+    if (window.currentReportStatus === "rejected") {
+        if (toast) {
+            toast.innerText = "⛔ Export Blocked: Rejected report cannot be exported to FHIR.";
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+        return;
+    }
+    if (window.currentReportStatus === "needs_review") {
+        if (toast) {
+            toast.innerText = "⚠ Clinical approval required before FHIR export.";
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+        return;
+    }
+    const bundle = {
+        resourceType: "Bundle",
+        id: "BUNDLE-SYN-P-0001",
+        type: "collection",
+        entry: [
+            { resource: { resourceType: "Patient", id: "SYN-P-0001", name: [{ text: "SYNTHETIC PATIENT ALPHA" }] } },
+            { resource: { resourceType: "DiagnosticReport", id: "REP-0001", status: "final" } },
+            { resource: { resourceType: "Observation", id: "PARAM-001", code: { text: "Hemoglobin" }, valueQuantity: { value: 11.8, unit: "g/dL" } } }
+        ]
+    };
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fhir_bundle_SYN-P-0001.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (toast) {
+        toast.innerText = "✓ FHIR R4 Bundle exported successfully (3 resources).";
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
 };
 
 </script>

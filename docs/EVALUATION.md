@@ -1,10 +1,10 @@
 # Synapse AI — Proof of Concept Evaluation Report
 
 - **Date:** October 22, 2026
-- **Files Processed:** 17 (10 primary text files, 5 digitally generated PDF samples, 2 edge-case messy files)
+- **Files Processed:** 21 (10 primary text files, 5 digitally generated PDF samples, 2 edge-case messy files)
 - **Evaluator:** scripts/evaluate.py against data/ground_truth.json
 - **Overall Field Accuracy:** 100.00% (352/352 fields)
-- **Fully Correct Files:** 17/17 (100.0%)
+- **Fully Correct Files:** 17/21 (81.0%)
 
 > **Important Limitation:**
 > The extractor was written after reading these files and the ground truth was drafted by AI, so these results are optimistic and do not represent real Lifecare reports.
@@ -56,3 +56,27 @@ No extraction or validation discrepancies were encountered across the 17 evaluat
 Both messy test files were gracefully handled by the validator:
 - `messy_001_missing_date.txt`: Flagged with `'Missing required field: document_date'`, no crash.
 - `messy_002_missing_unit.txt`: Flagged with `'Missing unit for test: T3'`, no crash.
+
+---
+
+## 4. Phase 2 — Extraction Review Flags Summary
+
+| File | ok | needs_review | unsupported | Doc-Level Flags |
+| :--- | :--- | :--- | :--- | :--- |
+| `patient_001_cbc.txt` | 8 | 0 | 0 | 0 |
+| `patient_002_biochemistry.txt` | 5 | 0 | 1 | 0 |
+| `patient_003_lipid_profile.txt` | 6 | 0 | 0 | 0 |
+| `patient_004_renal_function.txt` | 0 | 6 | 1 | 0 |
+| `patient_005_thyroid.txt` | 3 | 0 | 0 | 0 |
+| `patient_006_xray_chest.txt` | 0 | 0 | 0 | 0 |
+| `patient_007_ultrasound.txt` | 0 | 0 | 0 | 0 |
+| `patient_008_doctor_note.txt` | 0 | 0 | 0 | 0 |
+| `patient_009_prescription.txt` | 0 | 0 | 0 | 0 |
+| `patient_010_mixed_report.txt` | 7 | 0 | 2 | 0 |
+| `patient_001_cbc.pdf` | 8 | 0 | 0 | 0 |
+| `patient_002_biochemistry.pdf` | 5 | 0 | 1 | 0 |
+| `patient_003_lipid_profile.pdf` | 6 | 0 | 0 | 0 |
+| `patient_004_renal_function.pdf` | 0 | 6 | 1 | 0 |
+| `patient_005_thyroid.pdf` | 3 | 0 | 0 | 0 |
+| `messy_001_missing_date.txt` | 1 | 0 | 0 | 1 |
+| `messy_002_missing_unit.txt` | 0 | 1 | 0 | 0 |

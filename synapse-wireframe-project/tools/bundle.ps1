@@ -25,4 +25,6 @@ $html = [regex]::Replace($html, $jsPattern, {
 })
 
 Set-Content -Path $distPath -Value $html
-Write-Host "Bundled successfully"
+$rootPath = "c:\Tejaswi\Synapse\synapse-wireframe.html"
+Set-Content -Path $rootPath -Value $html
+Write-Host "Bundled successfully to $distPath and $rootPath"

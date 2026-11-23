@@ -4,446 +4,454 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Synapse Wireframe</title>
+    <!-- CSS Dependencies -->
     <style>
-        :root {
-            --primary: #1F3A5F;
-            --primary-light: #F0F4F8;
-            --surface: #FFFFFF;
-            --bg: #F5F7FA;
-            --text-main: #1A202C;
-            --text-muted: #718096;
-            --border: #E2E8F0;
-            --amber: #D97706;
-            --amber-bg: #FEF3C7;
-            --green: #059669;
-            --green-bg: #D1FAE5;
-            --red: #DC2626;
-            --red-bg: #FEE2E2;
-            --radius: 8px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --transition: all 0.2s ease-in-out;
-        }
+/* base.css: Reset and CSS variables */
+:root {
+    --primary: #1F3A5F;
+    --primary-light: #F0F4F8;
+    --surface: #FFFFFF;
+    --bg: #F5F7FA;
+    --text-main: #1A202C;
+    --text-muted: #718096;
+    --border: #E2E8F0;
+    --amber: #D97706;
+    --amber-bg: #FEF3C7;
+    --green: #059669;
+    --green-bg: #D1FAE5;
+    --red: #DC2626;
+    --red-bg: #FEE2E2;
+    --radius: 8px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --transition: all 0.2s ease-in-out;
+}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+}
 
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+</style>
+    <style>
+/* layout.css: Layout, sidebar, topbar, grid */
+body {
+    background-color: var(--bg);
+    color: var(--text-main);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
 
-        /* Annotations */
-        .annotation {
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            background-color: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 100;
-            cursor: help;
-            transform: translate(-50%, -50%);
-            display: none;
-        }
-        
-        body.annotations-on .annotation {
-            display: flex;
-        }
+.sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
 
-        .annotation-panel {
-            width: 300px;
-            background: white;
-            border-left: 1px solid var(--border);
-            display: none;
-            flex-direction: column;
-            padding: 16px;
-            overflow-y: auto;
-        }
+.logo {
+    padding: 24px 16px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
-        body.annotations-on .annotation-panel {
-            display: flex;
-        }
+.nav {
+    padding: 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
 
-        /* Layout */
-        .sidebar {
-            width: 240px;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-        }
+.nav-item {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-        .logo {
-            padding: 24px 16px;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--primary);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+.nav-item:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
 
-        .nav {
-            padding: 16px 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
+.nav-item.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+}
 
-        .nav-item {
-            padding: 12px 16px;
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--text-muted);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
 
-        .nav-item:hover {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
+.topbar {
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    flex-shrink: 0;
+}
 
-        .nav-item.active {
-            background: var(--primary-light);
-            color: var(--primary);
-            font-weight: 600;
-        }
+.search-bar {
+    position: relative;
+    width: 300px;
+}
 
-        .main-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+.search-bar input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    outline: none;
+}
 
-        .topbar {
-            height: 64px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            flex-shrink: 0;
-        }
+.search-bar svg {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
 
-        .search-bar {
-            position: relative;
-            width: 300px;
-        }
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
 
-        .search-bar input {
-            width: 100%;
-            padding: 8px 12px 8px 32px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            outline: none;
-        }
+.content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    position: relative;
+}
 
-        .search-bar svg {
-            position: absolute;
-            left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
+.grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
 
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
+</style>
+    <style>
+/* components.css: Reusable UI elements */
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
 
-        .badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .badge-synthetic {
-            background: #E2E8F0;
-            color: #4A5568;
-            border: 1px solid #CBD5E0;
-        }
+.badge-synthetic {
+    background: #E2E8F0;
+    color: #4A5568;
+    border: 1px solid #CBD5E0;
+}
 
-        .badge-status {
-            display: inline-block;
-        }
-        .status-amber { background: var(--amber-bg); color: var(--amber); }
-        .status-green { background: var(--green-bg); color: var(--green); }
-        .status-blue { background: var(--primary-light); color: var(--primary); }
+.badge-status {
+    display: inline-block;
+}
+.status-amber { background: var(--amber-bg); color: var(--amber); }
+.status-green { background: var(--green-bg); color: var(--green); }
+.status-blue { background: var(--primary-light); color: var(--primary); }
 
-        .toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--text-muted);
-        }
+.user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary-light);
+    padding: 4px 12px 4px 4px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary);
+}
 
-        .toggle-switch {
-            width: 36px;
-            height: 20px;
-            background: var(--border);
-            border-radius: 10px;
-            position: relative;
-            transition: var(--transition);
-        }
-        body.annotations-on .toggle-switch {
-            background: var(--primary);
-        }
-        
-        .toggle-knob {
-            width: 16px;
-            height: 16px;
-            background: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            transition: var(--transition);
-        }
-        body.annotations-on .toggle-knob {
-            left: 18px;
-        }
+.avatar {
+    width: 24px;
+    height: 24px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
 
-        .user-chip {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--primary-light);
-            padding: 4px 12px 4px 4px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--primary);
-        }
+.card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 24px;
+}
 
-        .avatar {
-            width: 24px;
-            height: 24px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-        .content {
-            flex: 1;
-            padding: 24px;
-            overflow-y: auto;
-            position: relative;
-        }
+th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+}
 
-        .screen {
-            display: none;
-            height: 100%;
-        }
+th {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+}
 
-        .screen.active {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
+.btn {
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
 
-        /* Cards & Components */
-        .card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            padding: 24px;
-        }
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
 
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
+.btn-primary:hover {
+    opacity: 0.9;
+}
 
-        .stat-card {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-main);
+}
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--green);
+    color: white;
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: var(--transition);
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
 
-        th, td {
-            text-align: left;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-        }
+</style>
+    <style>
+/* screens.css: Screen specific styles */
+.screen {
+    display: none;
+    height: 100%;
+}
 
-        th {
-            font-weight: 600;
-            color: var(--text-muted);
-            font-size: 12px;
-            text-transform: uppercase;
-        }
+.screen.active {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
 
-        .btn {
-            padding: 8px 16px;
-            border-radius: var(--radius);
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-main);
-        }
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
 
-        /* Specific Screens */
-        /* Upload */
-        .dropzone {
-            border: 2px dashed var(--border);
-            border-radius: var(--radius);
-            padding: 48px;
-            text-align: center;
-            background: var(--bg);
-            cursor: pointer;
-            margin-bottom: 16px;
-        }
+.stat-label {
+    font-size: 14px;
+    color: var(--text-muted);
+}
 
-        /* Review */
-        .split-view {
-            display: flex;
-            gap: 24px;
-            height: 100%;
-        }
+.dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px;
+    text-align: center;
+    background: var(--bg);
+    cursor: pointer;
+    margin-bottom: 16px;
+}
 
-        .split-pane {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: var(--surface);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-        }
+.split-view {
+    display: flex;
+    gap: 24px;
+    height: 100%;
+}
 
-        .mock-report {
-            padding: 40px;
-            font-family: monospace;
-            overflow-y: auto;
-        }
-        
-        .highlight-row {
-            background: rgba(217, 119, 6, 0.2);
-            outline: 2px solid var(--amber);
-        }
+.split-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
 
-        /* Timeline */
-        .chart-container {
-            height: 300px;
-            width: 100%;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-        }
+.mock-report {
+    padding: 40px;
+    font-family: monospace;
+    overflow-y: auto;
+}
 
-        /* AI Chat */
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            overflow-y: auto;
-            padding-bottom: 16px;
-        }
-        
-        .chat-msg {
-            padding: 16px;
-            border-radius: var(--radius);
-            max-width: 80%;
-        }
-        
-        .chat-user {
-            background: var(--primary-light);
-            align-self: flex-end;
-        }
-        
-        .chat-ai {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            align-self: flex-start;
-        }
+.highlight-row {
+    background: rgba(217, 119, 6, 0.2);
+    outline: 2px solid var(--amber);
+}
 
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: var(--green);
-            color: white;
-            padding: 12px 24px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: var(--transition);
-        }
+.chart-container {
+    height: 300px;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
 
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding-bottom: 16px;
+}
 
-    </style>
+.chat-msg {
+    padding: 16px;
+    border-radius: var(--radius);
+    max-width: 80%;
+}
+
+.chat-user {
+    background: var(--primary-light);
+    align-self: flex-end;
+}
+
+.chat-ai {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    align-self: flex-start;
+}
+
+</style>
+    <style>
+/* annotations.css: Numbered circles and toggle */
+.annotation {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background-color: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 100;
+    cursor: help;
+    transform: translate(-50%, -50%);
+    display: none;
+}
+
+body.annotations-on .annotation {
+    display: flex;
+}
+
+.annotation-panel {
+    width: 300px;
+    background: white;
+    border-left: 1px solid var(--border);
+    display: none;
+    flex-direction: column;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+body.annotations-on .annotation-panel {
+    display: flex;
+}
+
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.toggle-switch {
+    width: 36px;
+    height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    position: relative;
+    transition: var(--transition);
+}
+
+body.annotations-on .toggle-switch {
+    background: var(--primary);
+}
+
+.toggle-knob {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: var(--transition);
+}
+
+body.annotations-on .toggle-knob {
+    left: 18px;
+}
+
+</style>
 </head>
 <body class="annotations-on">
 
@@ -562,27 +570,37 @@
             <div id="upload" class="screen">
                 <h2>Upload Reports</h2>
                 <div class="card">
-                    <div style="margin-bottom: 16px;">
-                        <label>Source: </label>
-                        <select style="padding:4px 8px; border-radius:4px; border:1px solid var(--border);">
-                            <option>Lifecare</option>
-                            <option>External</option>
-                            <option>Other</option>
-                        </select>
+                    <div style="margin-bottom: 16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+                        <div>
+                            <label>Source: </label>
+                            <select style="padding:4px 8px; border-radius:4px; border:1px solid var(--border);">
+                                <option>Lifecare Diagnostics</option>
+                                <option>External Lab / Hospital</option>
+                                <option>Patient Upload</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; margin-left:auto;">
+                            <span style="font-size:12px; color:var(--text-muted); font-weight:600;">Simulate Pipeline:</span>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('digital_pdf')">📄 Digital PDF</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('scanned_pdf')">🖨️ Scanned (OCR)</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('medical_image')">🖼️ Image (OCR)</button>
+                            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="simulateUpload('clinical_note')">📝 Note (LLM)</button>
+                        </div>
                     </div>
-                    <div class="dropzone" id="dz" onclick="simulateUpload()">
-                        Drag and drop files here, or click to browse.<br><br>
-                        <button class="btn btn-primary" onclick="event.stopPropagation(); simulateUpload()">Upload sample reports</button>
+                    <div class="dropzone" id="dz" onclick="simulateUpload('digital_pdf')">
+                        Drag and drop files here, or click to browse (.pdf, .png, .jpg, .txt, .json).<br><br>
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); simulateUpload('digital_pdf')">Upload Sample CBC (Digital PDF)</button>
                     </div>
                     
                     <div id="upload-list" style="display:none; margin-top:24px;">
                         <h4>Processing Files...</h4>
-                        <div id="ufile-1" style="border:1px solid var(--border); padding:12px; margin-top:8px; border-radius:4px;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <b>CBC_report.pdf</b>
-                                <span class="badge badge-status status-blue" style="position:relative;">Digital PDF <div class="annotation" style="top:50%;left:-20px;">2</div></span>
+                        <div id="ufile-1" style="border:1px solid var(--border); padding:16px; margin-top:8px; border-radius:4px; background:var(--surface);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <b id="upload-filename">CBC_report.pdf</b>
+                                <span class="badge badge-status status-blue" id="upload-badge" style="position:relative;">Digital PDF <div class="annotation" style="top:50%;left:-20px;">2</div></span>
                             </div>
-                            <div class="progress-text" style="font-size:12px; color:var(--text-muted)">Uploaded</div>
+                            <div id="upload-progress-text" class="progress-text" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">Uploaded</div>
+                            <button id="upload-action-btn" class="btn btn-primary" style="display:none; padding:4px 12px; font-size:12px;" onclick="nav('review')">Review Extracted Data &rarr;</button>
                         </div>
                     </div>
                 </div>
@@ -658,8 +676,9 @@
                             </table>
                         </div>
                         <div style="padding:16px; border-top:1px solid var(--border); display:flex; gap:8px; background:var(--bg);">
-                            <button class="btn btn-outline">Reject</button>
-                            <button class="btn btn-primary" onclick="showToast()" style="margin-left:auto;">Approve & Save to Synapse</button>
+                            <button class="btn btn-outline" onclick="rejectReportWireframe()">Reject</button>
+                            <button class="btn btn-outline" id="btn-wireframe-export-fhir" onclick="exportFhirWireframe()">Export FHIR</button>
+                            <button class="btn btn-primary" onclick="approveReportWireframe()" style="margin-left:auto;">Approve & Save to Synapse</button>
                         </div>
                     </div>
                 </div>
@@ -695,7 +714,7 @@
                                 <td>CBC</td>
                                 <td>Lifecare</td>
                                 <td><span class="badge badge-status status-green">Validated</span></td>
-                                <td><button class="btn btn-outline" style="padding:4px 8px" onclick="alert('Drawer opens')">View</button></td>
+                                <td><button class="btn btn-outline" style="padding:4px 8px" onclick="openDrawer()">View</button></td>
                             </tr>
                             <tr>
                                 <td>03-11-2025</td>
@@ -703,7 +722,7 @@
                                 <td>Lipid Profile</td>
                                 <td>Lifecare</td>
                                 <td><span class="badge badge-status status-green">Validated</span></td>
-                                <td><button class="btn btn-outline" style="padding:4px 8px" onclick="alert('Drawer opens')">View</button></td>
+                                <td><button class="btn btn-outline" style="padding:4px 8px" onclick="openDrawer()">View</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -802,7 +821,7 @@
                             <b>Summary:</b><br>
                             Patient ALPHA has 3 CBC reports on file. Hemoglobin levels have shown a steady increase from 11.8 g/dL (Low) in Mar 2024 to 12.4 g/dL (Normal) in Sep 2026.<br><br>
                             <b>Trend Note:</b><br>
-                            The initial reading was below the reference range (12.0-15.5 g/dL), but subsequent readings in 2025 and 2026 have returned to normal levels.<br><br>
+                            The initial reading was below the reference range (12.0-15.5 g/dL), but subsequent readings in 2025 and 2026 are within the reference range.<br><br>
                             <div style="display:flex; gap:8px; margin-top:12px;">
                                 <span class="badge badge-synthetic" style="background:white; cursor:pointer;">Source: Mar '24 CBC</span>
                                 <span class="badge badge-synthetic" style="background:white; cursor:pointer;">Source: Feb '25 CBC</span>
@@ -856,69 +875,361 @@
     <!-- Toast -->
     <div id="toast" class="toast">Validated and saved successfully.</div>
 
+    <!-- JS Dependencies -->
     <script>
-        // Navigation
-        function nav(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById(screenId).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
+// app.js: Global namespace initialization
+window.Synapse = {
+    data: {},
+    ui: {},
+    router: {},
+    annotations: {},
+    screens: {
+        dashboard: {},
+        upload: {},
+        review: {},
+        library: {},
+        timeline: {},
+        assistant: {}
+    }
+};
 
-        // Annotations toggle
-        function toggleAnnotations() {
-            document.body.classList.toggle('annotations-on');
-        }
+</script>
+    <script>
+// mockData.js: All mock data for the application
+window.Synapse.data = {
+    patients: [
+        { id: 'SYN-P-0001', name: 'SYNTHETIC PATIENT ALPHA' },
+        { id: 'SYN-P-0002', name: 'SYNTHETIC PATIENT BETA' }
+    ],
+    dashboard: {
+        ingested: "1,284",
+        processedToday: "42",
+        pendingReview: "17",
+        avgConfidence: "94%"
+    }
+};
 
-        // Toast
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        // Simulate Upload Process
-        function simulateUpload() {
-            const list = document.getElementById('upload-list');
-            list.style.display = 'block';
-            const text = list.querySelector('.progress-text');
-            
-            const steps = [
-                "Uploaded",
-                "Format detected: Digital PDF",
-                "Text extracted",
-                "Fields extracted",
-                "Awaiting validation"
-            ];
-            
-            let i = 0;
-            const interval = setInterval(() => {
-                if(i < steps.length) {
-                    text.innerText = steps[i];
-                    if (i === steps.length - 1) {
-                        text.style.color = "var(--amber)";
-                        text.style.fontWeight = "bold";
-                    }
-                    i++;
-                } else {
-                    clearInterval(interval);
+</script>
+    <script>
+// router.js: Handles sidebar navigation
+window.Synapse.router = {
+    nav: function(screenId, el) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
+        document.getElementById(screenId).classList.add('active');
+        if(el) {
+            el.classList.add('active');
+        } else {
+            // Find nav item by onclick matching
+            document.querySelectorAll('.nav-item').forEach(n => {
+                if(n.getAttribute('onclick') && n.getAttribute('onclick').includes(screenId)) {
+                    n.classList.add('active');
                 }
-            }, 800);
+            });
+        }
+    }
+};
+
+// Global alias for onclick backwards compatibility
+window.nav = function(id) {
+    window.Synapse.router.nav(id, window.event ? window.event.currentTarget : null);
+};
+
+</script>
+    <script>
+// ui.js: UI helpers like toast
+window.Synapse.ui = {
+    showToast: function() {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    },
+    openDrawer: function() {
+        alert('Drawer opens');
+    }
+};
+
+// Global aliases
+window.showToast = window.Synapse.ui.showToast;
+window.openDrawer = window.Synapse.ui.openDrawer;
+
+</script>
+    <script>
+// annotations.js: Handles toggling annotations
+window.Synapse.annotations = {
+    toggle: function() {
+        document.body.classList.toggle('annotations-on');
+    }
+};
+
+// Global alias
+window.toggleAnnotations = window.Synapse.annotations.toggle;
+
+</script>
+    <script>
+// dashboard.js: Logic for Dashboard screen
+window.Synapse.screens.dashboard = {
+    render: function(container) {
+        // Dashboard is mostly static in the HTML
+    },
+    init: function() {}
+};
+
+</script>
+    <script>
+// upload.js: Logic for Upload screen supporting multi-format ingestion pipeline
+window.Synapse = window.Synapse || {};
+window.Synapse.screens = window.Synapse.screens || {};
+
+window.Synapse.screens.upload = {
+    currentTimer: null,
+    
+    samples: {
+        digital_pdf: {
+            filename: "CBC_report.pdf",
+            badgeText: "Digital PDF",
+            badgeClass: "status-blue",
+            steps: [
+                "1/5 Uploaded (248 KB)",
+                "2/5 Format detected: Digital PDF (vector text layer)",
+                "3/5 Digital text extracted via PyMuPDF (100% density)",
+                "4/5 Deterministic rule-based fields extracted (CBC panel)",
+                "5/5 Awaiting clinical review"
+            ]
+        },
+        scanned_pdf: {
+            filename: "scanned_lipid_profile.pdf",
+            badgeText: "Scanned PDF (OCR)",
+            badgeClass: "status-amber",
+            steps: [
+                "1/5 Uploaded (1.2 MB)",
+                "2/5 Format detected: Scanned PDF (0 text layer detected)",
+                "3/5 Hybrid OCR fallback initiated (rendering 300 DPI)",
+                "4/5 Optical character recognition extracted 6 parameters",
+                "5/5 Awaiting clinical review"
+            ]
+        },
+        medical_image: {
+            filename: "biochemistry_slip.png",
+            badgeText: "Medical Image (OCR)",
+            badgeClass: "status-amber",
+            steps: [
+                "1/5 Uploaded (820 KB)",
+                "2/5 Format detected: Medical Image (.png)",
+                "3/5 Image contrast pre-processing applied",
+                "4/5 Tesseract OCR extraction complete",
+                "5/5 Awaiting clinical review"
+            ]
+        },
+        clinical_note: {
+            filename: "dr_sharma_clinical_note.txt",
+            badgeText: "Narrative Note (LLM)",
+            badgeClass: "status-green",
+            steps: [
+                "1/5 Uploaded (14 KB)",
+                "2/5 Format detected: Unstructured Doctor Note",
+                "3/5 Phase 5 Hybrid LLM Router activated",
+                "4/5 Clinical entities, findings & diagnoses structured",
+                "5/5 Awaiting clinical review"
+            ]
+        }
+    },
+
+    simulate: function(formatKey = "digital_pdf") {
+        if (this.currentTimer) {
+            clearInterval(this.currentTimer);
         }
 
-        // Simulate AI
-        function simulateAI() {
-            document.getElementById('ai-input').value = "";
-            document.getElementById('ai-response').style.display = 'none';
-            const loading = document.getElementById('ai-loading');
-            loading.style.display = 'block';
-            
-            setTimeout(() => {
-                loading.style.display = 'none';
-                document.getElementById('ai-response').style.display = 'block';
-            }, 1500);
+        const sample = this.samples[formatKey] || this.samples.digital_pdf;
+        const list = document.getElementById('upload-list');
+        list.style.display = 'block';
+
+        const nameEl = document.getElementById('upload-filename');
+        const badgeEl = document.getElementById('upload-badge');
+        const textEl = document.getElementById('upload-progress-text');
+        const actionEl = document.getElementById('upload-action-btn');
+
+        if (nameEl) nameEl.innerText = sample.filename;
+        if (badgeEl) {
+            badgeEl.innerText = sample.badgeText;
+            badgeEl.className = "badge badge-status " + sample.badgeClass;
         }
-    </script>
+        if (actionEl) actionEl.style.display = 'none';
+
+        textEl.style.color = "var(--text-muted)";
+        textEl.style.fontWeight = "normal";
+
+        const steps = sample.steps;
+        let i = 0;
+        textEl.innerText = steps[0];
+
+        this.currentTimer = setInterval(() => {
+            i++;
+            if (i < steps.length) {
+                textEl.innerText = steps[i];
+                if (i === steps.length - 1) {
+                    textEl.style.color = "var(--amber)";
+                    textEl.style.fontWeight = "bold";
+                    if (actionEl) actionEl.style.display = 'inline-block';
+                    clearInterval(this.currentTimer);
+                }
+            } else {
+                clearInterval(this.currentTimer);
+            }
+        }, 650);
+    },
+
+    render: function(container) {},
+    init: function() {}
+};
+
+// Global aliases
+window.simulateUpload = function(formatKey) {
+    window.Synapse.screens.upload.simulate(formatKey || "digital_pdf");
+};
+
+</script>
+    <script>
+// review.js: Logic for Review screen
+window.Synapse.screens.review = {
+    render: function(container) {},
+    init: function() {}
+};
+
+window.reviewAuditLog = [
+    { timestamp: "2024-03-14 10:30", reviewer: "OCR / Pipeline", action: "initial_ingest", status: "needs_review", note: "Extracted with 1 low confidence field." }
+];
+
+window.currentReportStatus = "needs_review";
+
+window.approveReportWireframe = function() {
+    window.currentReportStatus = "approved";
+    window.reviewAuditLog.push({
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        reviewer: "Dr. Pathologist",
+        action: "approve",
+        status: "approved",
+        note: "Verified against laboratory analyzer output. Approved for clinical wallet."
+    });
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.innerText = "✓ Report Approved & Verified. FHIR R4 Export unlocked.";
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+    const fhirBtn = document.getElementById("btn-wireframe-export-fhir");
+    if (fhirBtn) {
+        fhirBtn.style.color = "var(--green)";
+        fhirBtn.innerText = "✓ Export FHIR (Ready)";
+    }
+};
+
+window.rejectReportWireframe = function() {
+    window.currentReportStatus = "rejected";
+    window.reviewAuditLog.push({
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        reviewer: "Dr. Pathologist",
+        action: "reject",
+        status: "rejected",
+        note: "Sample hemolysis detected. Specimen rejected."
+    });
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.innerText = "❌ Report Rejected. FHIR R4 export blocked.";
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+    const fhirBtn = document.getElementById("btn-wireframe-export-fhir");
+    if (fhirBtn) {
+        fhirBtn.style.color = "var(--red)";
+        fhirBtn.innerText = "❌ Export FHIR (Blocked)";
+    }
+};
+
+window.exportFhirWireframe = function() {
+    const toast = document.getElementById('toast');
+    if (window.currentReportStatus === "rejected") {
+        if (toast) {
+            toast.innerText = "⛔ Export Blocked: Rejected report cannot be exported to FHIR.";
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+        return;
+    }
+    if (window.currentReportStatus === "needs_review") {
+        if (toast) {
+            toast.innerText = "⚠ Clinical approval required before FHIR export.";
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+        return;
+    }
+    const bundle = {
+        resourceType: "Bundle",
+        id: "BUNDLE-SYN-P-0001",
+        type: "collection",
+        entry: [
+            { resource: { resourceType: "Patient", id: "SYN-P-0001", name: [{ text: "SYNTHETIC PATIENT ALPHA" }] } },
+            { resource: { resourceType: "DiagnosticReport", id: "REP-0001", status: "final" } },
+            { resource: { resourceType: "Observation", id: "PARAM-001", code: { text: "Hemoglobin" }, valueQuantity: { value: 11.8, unit: "g/dL" } } }
+        ]
+    };
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fhir_bundle_SYN-P-0001.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (toast) {
+        toast.innerText = "✓ FHIR R4 Bundle exported successfully (3 resources).";
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+};
+
+</script>
+    <script>
+// library.js: Logic for Report Library screen
+window.Synapse.screens.library = {
+    render: function(container) {},
+    init: function() {}
+};
+
+</script>
+    <script>
+// timeline.js: Logic for Patient Timeline screen
+window.Synapse.screens.timeline = {
+    render: function(container) {},
+    init: function() {}
+};
+
+</script>
+    <script>
+// assistant.js: Logic for AI Assistant screen
+window.Synapse.screens.assistant = {
+    simulate: function() {
+        document.getElementById('ai-input').value = "";
+        document.getElementById('ai-response').style.display = 'none';
+        const loading = document.getElementById('ai-loading');
+        loading.style.display = 'block';
+        
+        setTimeout(() => {
+            loading.style.display = 'none';
+            document.getElementById('ai-response').style.display = 'block';
+        }, 1500);
+    },
+    render: function(container) {},
+    init: function() {}
+};
+
+// Global alias
+window.simulateAI = window.Synapse.screens.assistant.simulate;
+
+</script>
 </body>
 </html>
+
